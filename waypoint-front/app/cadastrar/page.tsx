@@ -1,9 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { MapPin } from "lucide-react";
@@ -17,27 +15,29 @@ function Logo() {
   );
 }
 
-export default function LoginPage() {
+export default function RegisterPage() {
+  const router = useRouter();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [email, setEmail] = useState("");
+  const [birthDate, setBirthDate] = useState("");
   const [error, setError] = useState("");
-  const { login } = useAuth();
-  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
 
+    if (!username || !password || !email || !birthDate) {
+      setError("Todos os campos são obrigatórios");
+      return;
+    }
+
     try {
-      if (username === "admin" && password === "12345") {
-        const fakeToken = "dummy.jwt.token";
-        login(fakeToken);
-        router.push("/dashboard");
-      } else {
-        setError("Credenciais inválidas");
-      }
+      console.log("Cadastro enviado:", { username, email, birthDate });
+
+      router.push("/login");
     } catch (err) {
-      setError("Falha no login. Tente novamente.");
+      setError("Falha ao cadastrar. Tente novamente.");
       console.error(err);
     }
   };
@@ -70,33 +70,50 @@ export default function LoginPage() {
             />
           </div>
 
+          <div>
+            <label className="text-sm font-medium text-gray-700">E-mail</label>
+            <Input
+              type="email"
+              placeholder="E-mail"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="mt-1 bg-gray-50 border-gray-300"
+            />
+          </div>
+
+          <div>
+            <label className="text-sm font-medium text-gray-700">
+              Data de nascimento
+            </label>
+            <Input
+              type="date" // Tipo 'date' é mais apropriado
+              placeholder="Data de nascimento"
+              value={birthDate}
+              onChange={(e) => setBirthDate(e.target.value)}
+              className="mt-1 bg-gray-50 border-gray-300 text-gray-900"
+            />
+          </div>
+
           {error && <p className="text-sm text-red-500 text-center">{error}</p>}
 
-          <Button
-            type="submit"
-            size="lg"
-            className="mt-4 bg-orange-500 text-white font-semibold hover:bg-orange-500/90"
-          >
-            Fazer login
-          </Button>
+          <div className="flex flex-col gap-3 mt-4">
+            <Button
+              type="submit"
+              size="lg"
+              className="bg-orange-500 text-white font-semibold hover:bg-orange-500/90"
+            >
+              Cadastre-se
+            </Button>
 
-          <Link
-            href="/forgot-password"
-            className="text-sm font-medium text-purple-600 hover:text-purple-700 text-center mt-2"
-          >
-            Esqueceu a senha?
-          </Link>
-
-          <hr className="my-4 border-gray-300" />
-
-          <Button
-            type="button"
-            size="lg"
-            onClick={() => router.push("/cadastrar")}
-            className="bg-red-500 text-white font-semibold hover:bg-red-500/90"
-          >
-            Criar nova conta
-          </Button>
+            <Button
+              type="button"
+              size="lg"
+              onClick={() => router.back()}
+              className="bg-gray-200 text-gray-700 font-semibold hover:bg-gray-300"
+            >
+              Voltar
+            </Button>
+          </div>
         </form>
       </div>
     </div>

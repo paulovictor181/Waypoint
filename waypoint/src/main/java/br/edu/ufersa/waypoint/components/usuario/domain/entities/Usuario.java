@@ -3,6 +3,7 @@ package br.edu.ufersa.waypoint.components.usuario.domain.entities;
 import java.util.Collection;
 import java.util.List;
 
+import lombok.Data;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -14,8 +15,9 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
 @Entity
+@Data
 @Table(name = "usuarios")
-public class Usuario implements UserDetails{
+public class Usuario implements UserDetails {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

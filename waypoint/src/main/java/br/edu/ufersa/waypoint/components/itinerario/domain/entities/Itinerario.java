@@ -7,14 +7,9 @@ import java.util.List;
 import br.edu.ufersa.waypoint.components.usuario.domain.entities.Usuario;
 import br.edu.ufersa.waypoint.components.local.domain.entities.Local;
 
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
+import jakarta.persistence.*;
 
+@Entity
 public class Itinerario {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

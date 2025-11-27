@@ -1,4 +1,4 @@
-package br.edu.ufersa.waypoint.components.usuario.domain.services;
+package br.edu.ufersa.waypoint.components.usuario.domain.repository;
 
 import java.util.Optional;
 

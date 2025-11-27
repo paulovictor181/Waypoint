@@ -1,5 +1,6 @@
 package br.edu.ufersa.waypoint.components.usuario.domain.services;
 
+import br.edu.ufersa.waypoint.components.usuario.domain.repository.UsuarioRepository;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;

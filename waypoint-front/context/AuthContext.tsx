@@ -10,11 +10,16 @@ import React, {
 } from "react";
 import { useRouter } from "next/navigation";
 import api from "@/lib/api";
-import { LoginDTO } from "@/app/login/page"; // Podemos definir a interface aqui ou importar
+
+// Interface para os dados do login
+interface LoginData {
+  username?: string;
+  password?: string;
+}
 
 interface AuthContextType {
   isAuthenticated: boolean;
-  login: (data: LoginDTO) => Promise<void>;
+  login: (data: LoginData) => Promise<void>;
   logout: () => void;
   loading: boolean;
 }
@@ -27,7 +32,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const router = useRouter();
 
   useEffect(() => {
-    // Verifica se já existe token ao carregar a página
+    // Verifica token ao carregar a aplicação
     const token = localStorage.getItem("waypoint.token");
     if (token) {
       setIsAuthenticated(true);
@@ -35,25 +40,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setLoading(false);
   }, []);
 
-  const login = async ({ username, password }: LoginDTO) => {
+  const login = async ({ username, password }: LoginData) => {
     try {
-      // Chama seu AuthController: @PostMapping("/login")
+      // POST para /auth/login (somado à baseURL /api fica /api/auth/login)
       const response = await api.post("/auth/login", {
         username,
         password,
       });
 
+      // Extrai tokens da resposta (TokenDTO)
       const { tokenAcess, refreshToken } = response.data;
 
-      // Salva os tokens
       localStorage.setItem("waypoint.token", tokenAcess);
       localStorage.setItem("waypoint.refreshToken", refreshToken);
 
       setIsAuthenticated(true);
-      router.push("/dashboard"); // ou '/'
+      router.push("/dashboard"); // Redireciona após sucesso
     } catch (error) {
-      console.error("Erro ao fazer login", error);
-      throw error; // Repassa o erro para o componente tratar (exibir msg)
+      console.error("Erro no login:", error);
+      throw error; // Lança o erro para a página exibir feedback visual
     }
   };
 
@@ -74,7 +79,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error("useAuth must be used within an AuthProvider");
+    throw new Error("useAuth deve ser usado dentro de um AuthProvider");
   }
   return context;
 };

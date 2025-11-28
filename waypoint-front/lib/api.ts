@@ -1,46 +1,46 @@
+// Waypoint/waypoint-front/lib/api.ts
 import axios from "axios";
 
-// Tipagem baseada no seu TokenDTO.java
+// Interface compatível com o seu TokenDTO.java
 interface TokenResponse {
-  tokenAcess: string; // Mantendo a grafia do seu backend
+  tokenAcess: string; // Atenção: mantida a grafia do backend
   refreshToken: string;
 }
 
 const api = axios.create({
-  baseURL: "http://localhost:8080/api",
+  baseURL: "http://localhost:8080/api", // Base para todas as chamadas
   headers: {
     "Content-Type": "application/json",
   },
 });
 
-// Interceptor de Requisição: Adiciona o Token
+// Interceptor: Adiciona o Token em todas as requisições
 api.interceptors.request.use(
   (config) => {
-    // Evita loop infinito se for a rota de refresh
+    // Não adiciona token se for a rota de refresh para evitar loops ou erros
     if (config.url?.includes("/auth/refresh-token")) {
       return config;
     }
 
-    const token = localStorage.getItem("waypoint.token");
+    const token =
+      typeof window !== "undefined"
+        ? localStorage.getItem("waypoint.token")
+        : null;
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
-// Interceptor de Resposta: Trata o Refresh Token
+// Interceptor: Trata erros e faz o Refresh Token automático
 api.interceptors.response.use(
-  (response) => {
-    return response;
-  },
+  (response) => response,
   async (error) => {
     const originalRequest = error.config;
 
-    // Se o erro for 403 (Forbidden) e não for uma tentativa de refresh já falhada
+    // Se receber 403 (Forbidden) e não for uma tentativa repetida
     if (error.response?.status === 403 && !originalRequest._retry) {
       originalRequest._retry = true;
 
@@ -48,37 +48,33 @@ api.interceptors.response.use(
         const refreshToken = localStorage.getItem("waypoint.refreshToken");
 
         if (!refreshToken) {
-          // Sem refresh token, força logout
-          localStorage.removeItem("waypoint.token");
-          localStorage.removeItem("waypoint.refreshToken");
-          if (typeof window !== "undefined") {
-            window.location.href = "/login";
-          }
-          return Promise.reject(error);
+          throw new Error("Sem refresh token");
         }
 
-        // Chama o endpoint de refresh do seu AuthController
+        // Chama a rota de refresh (api/auth/refresh-token)
+        // Nota: Usamos axios direto para não passar pelos interceptors do 'api'
         const response = await axios.post<TokenResponse>(
           "http://localhost:8080/api/auth/refresh-token",
-          { refreshToken: refreshToken } // Body conforme RefreshTokenDTO
+          { refreshToken: refreshToken } // Payload conforme RefreshTokenDTO
         );
 
         const { tokenAcess, refreshToken: newRefreshToken } = response.data;
 
-        // Salva os novos tokens
+        // Atualiza os tokens no storage
         localStorage.setItem("waypoint.token", tokenAcess);
         localStorage.setItem("waypoint.refreshToken", newRefreshToken);
 
-        // Atualiza o header da requisição original e tenta novamente
+        // Atualiza o header da requisição que falhou e tenta novamente
         api.defaults.headers.common["Authorization"] = `Bearer ${tokenAcess}`;
         originalRequest.headers["Authorization"] = `Bearer ${tokenAcess}`;
 
         return api(originalRequest);
       } catch (refreshError) {
-        // Se o refresh falhar (expirou também), desloga o usuário
-        console.error("Sessão expirada", refreshError);
+        // Se falhar o refresh, limpa tudo e força logout
+        console.error("Sessão expirada ou refresh inválido", refreshError);
         localStorage.removeItem("waypoint.token");
         localStorage.removeItem("waypoint.refreshToken");
+
         if (typeof window !== "undefined") {
           window.location.href = "/login";
         }

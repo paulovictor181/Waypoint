@@ -1,4 +1,4 @@
-package br.edu.ufersa.waypoint.auth;
+package br.edu.ufersa.waypoint.components.auth;
 
 import jakarta.validation.constraints.NotBlank;
 

@@ -1,3 +1,4 @@
+// Waypoint/waypoint-front/app/login/page.tsx
 "use client";
 
 import { useState } from "react";
@@ -6,7 +7,13 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { MapPin } from "lucide-react";
+import { MapPin, Loader2 } from "lucide-react";
+
+// Interface exportada para uso no Context se necessário
+export interface LoginDTO {
+  username?: string;
+  password?: string;
+}
 
 function Logo() {
   return (
@@ -21,24 +28,29 @@ export default function LoginPage() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+
   const { login } = useAuth();
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setIsLoading(true);
 
     try {
-      if (username === "admin" && password === "12345") {
-        const fakeToken = "dummy.jwt.token";
-        login(fakeToken);
-        router.push("/dashboard");
+      await login({ username, password });
+      // O redirect acontece dentro do login() no context
+    } catch (err: any) {
+      // Verifica se é erro 403 (falha na autenticação) ou outro
+      if (err.response?.status === 403 || err.response?.status === 401) {
+        setError("Usuário ou senha incorretos.");
       } else {
-        setError("Credenciais inválidas");
+        setError("Erro ao conectar com o servidor. Tente novamente.");
       }
-    } catch (err) {
-      setError("Falha no login. Tente novamente.");
       console.error(err);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -52,10 +64,11 @@ export default function LoginPage() {
             <label className="text-sm font-medium text-gray-700">Usuário</label>
             <Input
               type="text"
-              placeholder="Usuário"
+              placeholder="Digite seu usuário"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              className="mt-1 bg-gray-50 border-gray-300"
+              className="mt-1 bg-gray-50 border-gray-300 text-gray-900"
+              required
             />
           </div>
 
@@ -63,10 +76,11 @@ export default function LoginPage() {
             <label className="text-sm font-medium text-gray-700">Senha</label>
             <Input
               type="password"
-              placeholder="Senha"
+              placeholder="Digite sua senha"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="mt-1 bg-gray-50 border-gray-300"
+              className="mt-1 bg-gray-50 border-gray-300 text-gray-900"
+              required
             />
           </div>
 
@@ -75,9 +89,14 @@ export default function LoginPage() {
           <Button
             type="submit"
             size="lg"
+            disabled={isLoading}
             className="mt-4 bg-orange-500 text-white font-semibold hover:bg-orange-500/90"
           >
-            Fazer login
+            {isLoading ? (
+              <Loader2 className="animate-spin h-5 w-5" />
+            ) : (
+              "Fazer login"
+            )}
           </Button>
 
           <Link

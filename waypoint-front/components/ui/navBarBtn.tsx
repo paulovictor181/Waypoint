@@ -1,28 +1,38 @@
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faHome, IconDefinition } from '@fortawesome/free-solid-svg-icons'; 
+"use client";
 
-interface NavBarBtnProps{
-    style?: String;
-    label: String;
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { IconDefinition } from '@fortawesome/free-solid-svg-icons'; 
+import Link from 'next/link';
+
+interface NavBarBtnProps {
+    className?: string; 
+    href: string;
+    label: string;      
     icon: IconDefinition;
-    selected: boolean;
+    isActive?: boolean; 
+    onClick?: () => void; // fazer o logout
 }
 
-const NavBarBtn = ({style, label, selected, icon } : NavBarBtnProps) => {
+const NavBarBtn = ({ className = "", label, href, isActive = false, icon, onClick }: NavBarBtnProps) => {
+    
+    const baseClasses = "flex justify-start items-center w-full h-10 my-2 transition duration-200 rounded-lg cursor-pointer";
+    const activeClasses = isActive 
+        ? "bg-orange-400 hover:bg-orange-500 text-black font-semibold" 
+        : "text-black hover:bg-gray-100 text-gray-600";
 
-    const bg = selected ? "bg-orange-400" : "text-black"; 
-    const bgHover = selected ? "hover:bg-orange-500" : "text-black hover:bg-gray-100";
-    const iconBtn = icon; 
-
-    return(
-        <button className={`flex justify-start items-center w-full h-10 my-4 ${bg} ${bgHover} transition duration-200 rounded-lg ${style}`}>
+    return (
+        <Link 
+            href={href} 
+            onClick={onClick}
+            className={`${baseClasses} ${activeClasses} ${className}`}
+        >
             <div className='w-6 mx-4'>
-                <FontAwesomeIcon icon={iconBtn} />
+                <FontAwesomeIcon icon={icon} />
             </div>
             <div>
                 {label}
             </div>
-        </button>
+        </Link>
     );
 } 
 

@@ -1,5 +1,7 @@
 package br.edu.ufersa.waypoint.components.usuario.domain.entities;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 
@@ -31,6 +33,7 @@ public class Usuario implements UserDetails {
     private String password;
     private String role;
     private String email;
+    private LocalDate birthDate;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

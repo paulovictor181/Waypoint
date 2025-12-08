@@ -26,16 +26,20 @@ public class FilterTokenAcess extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-        // Recuperar o token da requisição
         String token = recoverTokenRequest(request);
 
         if( token != null ) {
-            String username = tokenService.verifyToken(token);
-            Usuario usuario = usuarioRepository.findByUsername(username).orElseThrow(RuntimeException::new);
+            try {
+                String username = tokenService.verifyToken(token);
+                Usuario usuario = usuarioRepository.findByUsername(username).orElse(null);
 
-            Authentication authentication = new UsernamePasswordAuthenticationToken(usuario,null,usuario.getAuthorities());
-
-            SecurityContextHolder.getContext().setAuthentication(authentication);
+                if (usuario != null) {
+                    Authentication authentication = new UsernamePasswordAuthenticationToken(usuario, null, usuario.getAuthorities());
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                }
+            } catch (Exception ex) {
+                System.out.println("Token inválido ou expirado: " + ex.getMessage());
+            }
         }
 
         filterChain.doFilter(request, response);

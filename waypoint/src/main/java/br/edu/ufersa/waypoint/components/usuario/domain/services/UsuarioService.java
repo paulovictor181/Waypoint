@@ -7,8 +7,10 @@ import br.edu.ufersa.waypoint.components.usuario.domain.repository.UsuarioReposi
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.crossstore.ChangeSetPersister;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 @Service
 @RequiredArgsConstructor
@@ -22,6 +24,14 @@ public class UsuarioService {
 
     @Transactional
     public Usuario register(RegisterRequest registerRequest) {
+        if (usuarioRepository.findByUsername(registerRequest.username()).isPresent()) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Nome de usuário já existe.");
+        }
+
+        if (usuarioRepository.findByEmail(registerRequest.email()).isPresent()) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Este e-mail já está cadastrado.");
+        }
+
         Usuario usuario = UsuarioMapper.RequestToEntity(registerRequest);
         usuario.setPassword(passwordEncoder.encode(usuario.getPassword()));
         return usuarioRepository.save(usuario);

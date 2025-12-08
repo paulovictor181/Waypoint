@@ -1,4 +1,4 @@
-package br.edu.ufersa.waypoint.components.auth;
+package br.edu.ufersa.waypoint.auth.services;
 
 import br.edu.ufersa.waypoint.components.usuario.domain.entities.Usuario;
 import com.auth0.jwt.JWT;
@@ -12,7 +12,6 @@ import org.springframework.stereotype.Service;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
-import java.util.Date;
 
 @Service
 public class TokenService {

@@ -1,7 +1,11 @@
-package br.edu.ufersa.waypoint.components.auth;
+package br.edu.ufersa.waypoint.auth.restControllers;
 
+import br.edu.ufersa.waypoint.auth.dtos.*;
+import br.edu.ufersa.waypoint.auth.services.TokenService;
+import br.edu.ufersa.waypoint.components.usuario.api.mappers.UsuarioMapper;
 import br.edu.ufersa.waypoint.components.usuario.domain.entities.Usuario;
 import br.edu.ufersa.waypoint.components.usuario.domain.repository.UsuarioRepository;
+import br.edu.ufersa.waypoint.components.usuario.domain.services.UsuarioService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -20,6 +24,7 @@ public class AuthController {
     private final AuthenticationManager authenticationManager;
     private final TokenService tokenService;
     private final UsuarioRepository usuarioRepository;
+    private final UsuarioService usuarioService;
 
     @PostMapping("/login")
     public ResponseEntity<TokenDTO> authenticate(@Valid @RequestBody LoginDTO loginDTO) {
@@ -41,5 +46,13 @@ public class AuthController {
         String tokenAccess = tokenService.generateToken(usuario);
         String updateRefreshToken = tokenService.generateRefreshToken(usuario);
 
-        return ResponseEntity.ok(new TokenDTO(tokenAccess, updateRefreshToken));    }
+        return ResponseEntity.ok(new TokenDTO(tokenAccess, updateRefreshToken));
+    }
+
+    @PostMapping("/register")
+    public ResponseEntity<RegisterResponse> register(@Valid @RequestBody RegisterRequest registerRequest) {
+        Usuario usuario = usuarioService.register(registerRequest);
+
+        return ResponseEntity.ok(UsuarioMapper.EntityToResponse(usuario));
+    }
 }

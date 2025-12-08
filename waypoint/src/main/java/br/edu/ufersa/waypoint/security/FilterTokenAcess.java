@@ -1,6 +1,6 @@
-package br.edu.ufersa.waypoint.config;
+package br.edu.ufersa.waypoint.security;
 
-import br.edu.ufersa.waypoint.components.auth.TokenService;
+import br.edu.ufersa.waypoint.auth.services.TokenService;
 import br.edu.ufersa.waypoint.components.usuario.domain.entities.Usuario;
 import br.edu.ufersa.waypoint.components.usuario.domain.repository.UsuarioRepository;
 import jakarta.servlet.FilterChain;

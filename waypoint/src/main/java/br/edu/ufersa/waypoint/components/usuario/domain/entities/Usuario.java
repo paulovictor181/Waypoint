@@ -3,7 +3,10 @@ package br.edu.ufersa.waypoint.components.usuario.domain.entities;
 import java.util.Collection;
 import java.util.List;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -17,6 +20,9 @@ import jakarta.persistence.Table;
 @Entity
 @Data
 @Table(name = "usuarios")
+@Builder
+@RequiredArgsConstructor
+@AllArgsConstructor
 public class Usuario implements UserDetails {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -25,7 +31,7 @@ public class Usuario implements UserDetails {
     private String password;
     private String role;
     private String email;
-    
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return List.of(new SimpleGrantedAuthority("ROLE_USER"));

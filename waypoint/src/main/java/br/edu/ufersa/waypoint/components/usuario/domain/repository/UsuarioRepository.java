@@ -10,4 +10,5 @@ import br.edu.ufersa.waypoint.components.usuario.domain.entities.Usuario;
 @Repository
 public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
     Optional<Usuario> findByUsername(String username);
+    Optional<Usuario> findByEmail(String email);
 }

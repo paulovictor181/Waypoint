@@ -7,16 +7,8 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { MapPin, Loader2 } from "lucide-react";
-
-function Logo() {
-  return (
-    <div className="flex items-center justify-center gap-2 mb-8">
-      <MapPin className="h-10 w-10 text-orange-500" />
-      <span className="text-3xl font-bold text-gray-900">Waypoint</span>
-    </div>
-  );
-}
+import { Loader2 } from "lucide-react";
+import Logo from "@/components/ui/logo";
 
 export default function LoginPage() {
   const [username, setUsername] = useState("");

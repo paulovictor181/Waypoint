@@ -27,7 +27,7 @@ function RightNavBar() {
   const pathname = usePathname();
 
   return (
-    <nav className="flex flex-col justify-between w-96 h-screen border-r-2 border-slate-400 p-4 bg-white">
+    <nav className="flex flex-col justify-between min-w-96 max-w-96 h-screen border-r-2 border-slate-400 p-4 bg-gray-50">
       {/* Main Navigation */}
       <div className="flex flex-col">
         <Logo />

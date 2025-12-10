@@ -1,7 +1,6 @@
 "use client";
 
 import L from "leaflet";
-import { useEffect } from "react";
 import {
   MapContainer,
   Marker,
@@ -10,17 +9,24 @@ import {
   useMapEvents,
 } from "react-leaflet";
 
-// Correção para ícones padrão do Leaflet no Next.js
-const icon = L.icon({
-  iconUrl: "/marker-icon.png", // Você pode precisar adicionar imagens na pasta public ou usar CDN
-  shadowUrl: "/marker-shadow.png",
+// 1. Ícone Padrão (Marcador Azul) - Forçando o uso de CDN para evitar erros de importação
+const defaultIcon = L.icon({
+  iconUrl:
+    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png",
+  shadowUrl:
+    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
+  iconRetinaUrl:
+    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png",
   iconSize: [25, 41],
   iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41],
 });
 
+// 2. Ícone de POI (Sugestões - Violeta)
 const poiIcon = L.icon({
   iconUrl:
-    "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/markers-default/violet-2x.png", // Marcador violeta
+    "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/markers-default/violet-2x.png",
   shadowUrl:
     "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
   iconSize: [25, 41],
@@ -45,9 +51,9 @@ function LocationMarker({
 
 interface ItineraryMapProps {
   markers: { lat: number; lng: number; name: string }[];
-  suggestedMarkers?: { lat: number; lng: number; name: string; type: string }[]; // Nova prop
+  suggestedMarkers?: { lat: number; lng: number; name: string; type: string }[];
   onMapClick: (lat: number, lng: number) => void;
-  onPoiClick?: (poi: any) => void; // Ação ao clicar no POI sugerido
+  onPoiClick?: (poi: any) => void;
   selectedPosition: { lat: number; lng: number } | null;
 }
 
@@ -58,22 +64,9 @@ export default function ItineraryMap({
   onPoiClick,
   selectedPosition,
 }: ItineraryMapProps) {
-  useEffect(() => {
-    // @ts-ignore
-    delete L.Icon.Default.prototype._getIconUrl;
-    L.Icon.Default.mergeOptions({
-      iconRetinaUrl:
-        "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png",
-      iconUrl:
-        "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png",
-      shadowUrl:
-        "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
-    });
-  }, []);
-
   return (
     <MapContainer
-      center={[-5.187978, -37.344265]} // Mossoró como exemplo inicial
+      center={[-5.187978, -37.344265]} // Mossoró
       zoom={13}
       className="h-full w-full z-0"
     >
@@ -84,9 +77,13 @@ export default function ItineraryMap({
 
       <LocationMarker onLocationSelect={onMapClick} />
 
-      {/* Marcadores já salvos */}
+      {/* Marcadores já salvos (Itinerário) - AQUI ESTAVA O ERRO, AGORA USA O defaultIcon */}
       {markers.map((marker, idx) => (
-        <Marker key={idx} position={[marker.lat, marker.lng]}>
+        <Marker
+          key={idx}
+          position={[marker.lat, marker.lng]}
+          icon={defaultIcon}
+        >
           <Popup>{marker.name}</Popup>
         </Marker>
       ))}
@@ -96,6 +93,7 @@ export default function ItineraryMap({
         <Marker
           position={[selectedPosition.lat, selectedPosition.lng]}
           opacity={0.6}
+          icon={defaultIcon}
         >
           <Popup>Novo local selecionado</Popup>
         </Marker>
@@ -109,7 +107,6 @@ export default function ItineraryMap({
           icon={poiIcon}
           eventHandlers={{
             click: () => {
-              // Ao clicar no ícone roxo, preenche o formulário do usuário
               if (onPoiClick) onPoiClick(poi);
             },
           }}

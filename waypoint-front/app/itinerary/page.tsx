@@ -70,9 +70,16 @@ export default function ItineraryPage() {
 
     // 2. Buscar locais interessantes ao redor (Overpass)
     setIsLoadingPOIs(true);
-    const pois = await fetchNearbyPOIs(lat, lng, 2000); // Raio de 2km
-    setSuggestedPOIs(pois);
-    setIsLoadingPOIs(false);
+    try {
+      const pois = await fetchNearbyPOIs(lat, lng, 2000); // Raio de 2km
+      console.log("POIs encontrados:", pois);
+      setSuggestedPOIs(pois || []);
+    } catch (error) {
+      console.error("Erro ao buscar POIs:", error);
+      setSuggestedPOIs([]);
+    } finally {
+      setIsLoadingPOIs(false);
+    }
   };
 
   // Função auxiliar para quando clicar em um POI sugerido, preencher o formulário
@@ -333,6 +340,8 @@ export default function ItineraryPage() {
             markers={mapMarkers}
             onMapClick={handleMapClick}
             selectedPosition={tempLocation}
+            suggestedMarkers={suggestedPOIs}
+            onPoiClick={selectPOI}
           />
         </div>
       </main>

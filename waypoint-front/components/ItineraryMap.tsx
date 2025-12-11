@@ -23,18 +23,20 @@ const defaultIcon = L.icon({
   shadowSize: [41, 41],
 });
 
-// 2. Ícone de POI (Sugestões - Violeta)
+// 2. Ícone de POI (Sugestões - Violeta) - CORRIGIDO
+// Usando CDN jsDelivr que é mais estável e com os nomes de arquivo corretos
 const poiIcon = L.icon({
   iconUrl:
-    "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/markers-default/violet-2x.png",
+    "https://cdn.jsdelivr.net/gh/pointhi/leaflet-color-markers@master/img/marker-icon-violet.png",
   shadowUrl:
     "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
+  iconRetinaUrl:
+    "https://cdn.jsdelivr.net/gh/pointhi/leaflet-color-markers@master/img/marker-icon-2x-violet.png",
   iconSize: [25, 41],
   iconAnchor: [12, 41],
   popupAnchor: [1, -34],
   shadowSize: [41, 41],
 });
-
 // Componente para capturar cliques no mapa
 function LocationMarker({
   onLocationSelect,

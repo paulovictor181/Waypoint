@@ -7,8 +7,7 @@ import api from "@/lib/api";
 import { fetchPOIsInBounds, getRoute, POI } from "@/lib/osm";
 import { MapPin, Plus, Trash2 } from "lucide-react";
 import dynamic from "next/dynamic";
-import { useSearchParams } from "next/navigation";
-import { useRouter } from "next/router";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 const ItineraryMap = dynamic(() => import("@/components/ItineraryMap"), {

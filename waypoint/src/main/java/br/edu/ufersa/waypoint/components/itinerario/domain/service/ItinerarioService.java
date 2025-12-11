@@ -44,7 +44,7 @@ public class ItinerarioService {
     public ItinerarioResumoDTO criar(ItinerarioRequest request, Usuario usuario) {
         Itinerario novo = Itinerario.builder()
                 .name(request.name())
-                .destino(request.destination())
+                .destino(request.destino())
                 .inicio(request.inicio())
                 .fim(request.fim())
                 .totalOrcamento(request.totalOrcamento())

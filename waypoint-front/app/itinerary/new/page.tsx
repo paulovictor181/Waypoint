@@ -32,10 +32,10 @@ export default function NewItineraryPage() {
       // 1. Envia para o Backend
       const response = await api.post("/itinerarios", {
         name: nome,
-        destination: destino,
-        startDate: dateRange.from.toISOString().split("T")[0], // YYYY-MM-DD
-        endDate: dateRange.to.toISOString().split("T")[0],
-        totalBudget: parseFloat(orcamento),
+        destino: destino,
+        inicio: dateRange.from.toISOString().split("T")[0], // YYYY-MM-DD
+        fim: dateRange.to.toISOString().split("T")[0],
+        totalOrcamento: parseFloat(orcamento),
       });
 
       const novoItinerario = response.data;

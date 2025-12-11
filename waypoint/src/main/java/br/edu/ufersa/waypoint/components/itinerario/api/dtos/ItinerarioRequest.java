@@ -7,7 +7,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 
 public record ItinerarioRequest(@NotBlank String name,
-                                @NotBlank String destination,
+                                @NotBlank String destino,
                                 @NotNull LocalDate inicio,
                                 @NotNull LocalDate fim,
                                 @NotNull BigDecimal totalOrcamento ) {

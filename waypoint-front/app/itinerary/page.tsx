@@ -3,10 +3,10 @@
 import { RightNavBar } from "@/components/rightNavBar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { fetchPOIsInBounds, POI } from "@/lib/osm";
+import { fetchPOIsInBounds, getRoute, POI } from "@/lib/osm";
 import { MapPin, Plus, Trash2 } from "lucide-react";
 import dynamic from "next/dynamic";
-import { useMemo, useRef, useState } from "react"; // Adicione useRef
+import { useEffect, useMemo, useRef, useState } from "react"; // Adicione useRef
 
 const ItineraryMap = dynamic(() => import("@/components/ItineraryMap"), {
   ssr: false,
@@ -47,9 +47,26 @@ export default function ItineraryPage() {
 
   const [suggestedPOIs, setSuggestedPOIs] = useState<POI[]>([]);
   const [isLoadingPOIs, setIsLoadingPOIs] = useState(false);
+  const [routePath, setRoutePath] = useState<[number, number][]>([]);
 
   // Referência para o timer do debounce
   const debounceTimer = useRef<NodeJS.Timeout | null>(null);
+
+  // EFEITO: Sempre que os locais do dia mudam, recalcula a rota
+  useEffect(() => {
+    const locaisDoDia = dias[selectedDayIndex].locais;
+
+    if (locaisDoDia.length > 1) {
+      // Pega só lat/lng dos locais já salvos
+      const points = locaisDoDia.map((l) => ({ lat: l.lat, lng: l.lng }));
+
+      getRoute(points).then((path) => {
+        setRoutePath(path);
+      });
+    } else {
+      setRoutePath([]); // Limpa a rota se tiver menos de 2 pontos
+    }
+  }, [dias, selectedDayIndex]);
 
   // FUNÇÃO ATUALIZADA COM DEBOUNCE
   const handleMapMove = (bounds: any) => {
@@ -314,6 +331,7 @@ export default function ItineraryPage() {
             suggestedMarkers={suggestedPOIs}
             onPoiClick={selectPOI}
             onBoundsChange={handleMapMove}
+            routeCoordinates={routePath}
           />
           {isLoadingPOIs && (
             <div className="absolute top-4 right-4 z-[1000] bg-white px-3 py-1 rounded shadow text-xs font-medium text-orange-600">

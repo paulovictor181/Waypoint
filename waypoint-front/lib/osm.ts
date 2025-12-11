@@ -84,3 +84,28 @@ export async function fetchPOIsInBounds(
     return [];
   }
 }
+
+export async function getRoute(
+  coordinates: { lat: number; lng: number }[]
+): Promise<[number, number][]> {
+  if (coordinates.length < 2) return [];
+
+  const coordsString = coordinates.map((c) => `${c.lng},${c.lat}`).join(";");
+
+  const url = `https://router.project-osrm.org/route/v1/driving/${coordsString}?overview=full&geometries=geojson`;
+
+  try {
+    const response = await fetch(url);
+    const data = await response.json();
+
+    if (data.code !== "Ok" || !data.routes || data.routes.length === 0) {
+      return [];
+    }
+
+    const geojsonCoords = data.routes[0].geometry.coordinates;
+    return geojsonCoords.map((coord: number[]) => [coord[1], coord[0]]);
+  } catch (error) {
+    console.error("Erro ao buscar rota:", error);
+    return [];
+  }
+}

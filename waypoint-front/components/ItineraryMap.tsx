@@ -25,7 +25,6 @@ import {
 } from "react-leaflet";
 
 // --- FUNÇÃO PARA CRIAR ÍCONES PERSONALIZADOS ---
-// Transforma um ícone React (Lucide) em um Marcador Leaflet com Tailwind
 const createCustomIcon = (
   icon: React.ReactNode,
   bgColor: string = "bg-blue-500"
@@ -35,7 +34,6 @@ const createCustomIcon = (
       className={`relative flex items-center justify-center w-8 h-8 rounded-full border-2 border-white shadow-md ${bgColor} text-white`}
     >
       {icon}
-      {/* Triângulo (ponta do pino) */}
       <div
         className={`absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-3 h-3 rotate-45 border-b-2 border-r-2 border-white ${bgColor}`}
       ></div>
@@ -44,23 +42,23 @@ const createCustomIcon = (
 
   return L.divIcon({
     html: iconHtml,
-    className: "", // Remove classes padrão do Leaflet para não atrapalhar
-    iconSize: [32, 42], // Tamanho total aproximado
-    iconAnchor: [16, 42], // Ponto que toca o mapa (meio embaixo)
-    popupAnchor: [0, -45], // Onde o popup abre
+    className: "",
+    iconSize: [32, 42],
+    iconAnchor: [16, 42],
+    popupAnchor: [0, -45],
   });
 };
 
 // Ícone Padrão (Azul - Para locais salvos)
 const savedIcon = createCustomIcon(
   <MapPin className="w-5 h-5" />,
-  "bg-blue-600"
+  "bg-orange-600"
 );
 
 // Ícone Temporário (Laranja - Seleção atual)
 const tempIcon = createCustomIcon(
   <MapPin className="w-5 h-5" />,
-  "bg-orange-500"
+  "bg-blue-500"
 );
 
 // Função para escolher ícone baseado no tipo do POI
@@ -93,7 +91,6 @@ const getPoiIcon = (type: string) => {
   return createCustomIcon(icon, color);
 };
 
-// ... (Resto do componente Handler mantém igual) ...
 function MapEventsHandler({
   onLocationSelect,
   onBoundsChange,
@@ -166,15 +163,14 @@ export default function ItineraryMap({
       >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-          url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+          url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
         />
 
-        {/* --- DESENHO DA ROTA --- */}
         {routeCoordinates.length > 0 && (
           <Polyline
             positions={routeCoordinates}
             pathOptions={{
-              color: "#3b82f6",
+              color: "#f97316",
               weight: 5,
               opacity: 0.7,
               dashArray: "10, 10",
@@ -188,37 +184,13 @@ export default function ItineraryMap({
           onMapClickEmpty={() => setActivePOI(null)}
         />
 
-        {/* Marcadores do Itinerário (Azul) */}
-        {markers.map((marker, idx) => (
-          <Marker
-            key={idx}
-            position={[marker.lat, marker.lng]}
-            icon={savedIcon}
-          >
-            <Popup>
-              <span className="font-bold text-gray-800">{marker.name}</span>
-            </Popup>
-          </Marker>
-        ))}
-
-        {/* Marcador Selecionado (Laranja) */}
-        {selectedPosition && (
-          <Marker
-            position={[selectedPosition.lat, selectedPosition.lng]}
-            opacity={0.8}
-            icon={tempIcon}
-          >
-            <Popup>Novo local selecionado</Popup>
-          </Marker>
-        )}
-
-        {/* Sugestões (Dinâmicos) */}
+        {/* 1. Sugestões (Renderizadas PRIMEIRO = Ficam por BAIXO) */}
         {suggestedMarkers.map((poi, idx) => (
           <Marker
             key={`poi-${idx}`}
             position={[poi.lat, poi.lng]}
-            // AQUI ESTÁ A MÁGICA: Ícone muda conforme o tipo
             icon={getPoiIcon(poi.type)}
+            zIndexOffset={0} // Prioridade Baixa
             eventHandlers={{
               click: (e) => {
                 L.DomEvent.stopPropagation(e);
@@ -232,9 +204,35 @@ export default function ItineraryMap({
             </Popup>
           </Marker>
         ))}
+
+        {/* 2. Marcadores Salvos (Renderizados DEPOIS = Ficam por CIMA) */}
+        {markers.map((marker, idx) => (
+          <Marker
+            key={idx}
+            position={[marker.lat, marker.lng]}
+            icon={savedIcon}
+            zIndexOffset={500} // Prioridade Média
+          >
+            <Popup>
+              <span className="font-bold text-gray-800">{marker.name}</span>
+            </Popup>
+          </Marker>
+        ))}
+
+        {/* 3. Marcador Selecionado (Renderizado POR ÚLTIMO = TOPO ABSOLUTO) */}
+        {selectedPosition && (
+          <Marker
+            position={[selectedPosition.lat, selectedPosition.lng]}
+            opacity={0.9}
+            icon={tempIcon}
+            zIndexOffset={1000} // Prioridade Máxima
+          >
+            <Popup>Novo local selecionado</Popup>
+          </Marker>
+        )}
       </MapContainer>
 
-      {/* CARD DE DETALHES (Mantido igual ao anterior) */}
+      {/* CARD DE DETALHES */}
       {activePOI && (
         <div className="absolute bottom-6 left-6 z-[500] w-80 bg-white rounded-xl shadow-2xl border-l-4 border-orange-500 overflow-hidden animate-in slide-in-from-bottom-4 fade-in duration-300">
           <div className="p-4 relative">

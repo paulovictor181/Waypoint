@@ -1,5 +1,7 @@
 package br.edu.ufersa.waypoint.components.itinerario.domain.service;
 
+import br.edu.ufersa.waypoint.components.cidade.domain.entities.Cidade;
+import br.edu.ufersa.waypoint.components.cidade.domain.repository.CidadeRepository;
 import br.edu.ufersa.waypoint.components.itinerario.api.dtos.ItinerarioRequest;
 import br.edu.ufersa.waypoint.components.itinerario.api.dtos.ItinerarioResumoDTO;
 import br.edu.ufersa.waypoint.components.itinerario.domain.entities.Itinerario;
@@ -17,17 +19,12 @@ import java.util.stream.Collectors;
 public class ItinerarioService {
 
     private final ItinerarioRepository itinerarioRepository;
+    private final CidadeRepository cidadeRepository;
 
     public List<ItinerarioResumoDTO> listarPorUsuario(Usuario usuario) {
         List<Itinerario> lista = itinerarioRepository.findByUsuarioId(usuario.getId());
 
-        return lista.stream().map(it -> new ItinerarioResumoDTO(
-                it.getId(),
-                it.getName(),
-                it.getInicio(),
-                it.getFim(),
-                it.getTotalOrcamento()
-        )).collect(Collectors.toList());
+        return lista.stream().map(this::toDTO).collect(Collectors.toList());
     }
 
     public ItinerarioResumoDTO buscarPorId(Long id, Usuario usuario) {
@@ -42,9 +39,24 @@ public class ItinerarioService {
 
     @Transactional
     public ItinerarioResumoDTO criar(ItinerarioRequest request, Usuario usuario) {
+
+        Cidade cidade =
+                cidadeRepository.findByOsmId(request.cidadeOsmId())
+                .orElseGet(() -> {
+                    Cidade nova = Cidade.builder()
+                            .osmId(request.cidadeOsmId())
+                            .nome(request.cidadeNome())
+                            .estado(request.cidadeEstado())
+                            .pais(request.cidadePais())
+                            .latitude(request.cidadeLat())
+                            .longitude(request.cidadeLon())
+                            .build();
+                    return cidadeRepository.save(nova);
+                });
+
         Itinerario novo = Itinerario.builder()
                 .name(request.name())
-                .destino(request.destino())
+                .cidade(cidade)
                 .inicio(request.inicio())
                 .fim(request.fim())
                 .totalOrcamento(request.totalOrcamento())

@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { MapPin, Search } from "lucide-react";
+import Link from "next/link";
 
 function Logo() {
   return (
@@ -18,10 +19,11 @@ export default function OnboardingPage() {
         <nav className="flex items-center justify-between">
           <Logo />
           <Button
+            asChild
             size="lg"
             className="bg-orange-500 text-white font-semibold hover:bg-orange-500/90"
           >
-            Fazer Login
+            <Link href="/login">Fazer Login</Link>
           </Button>
         </nav>
       </header>

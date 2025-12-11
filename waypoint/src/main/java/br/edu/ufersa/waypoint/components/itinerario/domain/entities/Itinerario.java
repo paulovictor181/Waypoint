@@ -5,6 +5,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
+import br.edu.ufersa.waypoint.components.cidade.domain.entities.Cidade;
 import br.edu.ufersa.waypoint.components.usuario.domain.entities.Usuario;
 import br.edu.ufersa.waypoint.components.local.domain.entities.Local;
 
@@ -26,7 +27,11 @@ public class Itinerario {
     private Long id;
     
     private String name;
-    private String destino;
+
+    @ManyToOne
+    @JoinColumn(name = "cidade_id")
+    private Cidade cidade;
+
     private BigDecimal totalOrcamento;
 
     private LocalDate inicio;

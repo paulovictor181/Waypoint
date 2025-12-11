@@ -1,9 +1,11 @@
 package br.edu.ufersa.waypoint.components.itinerario.domain.service;
 
+import br.edu.ufersa.waypoint.components.itinerario.api.dtos.ItinerarioRequest;
 import br.edu.ufersa.waypoint.components.itinerario.api.dtos.ItinerarioResumoDTO;
 import br.edu.ufersa.waypoint.components.itinerario.domain.entities.Itinerario;
 import br.edu.ufersa.waypoint.components.itinerario.domain.repository.ItinerarioRepository;
 import br.edu.ufersa.waypoint.components.usuario.domain.entities.Usuario;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -28,4 +30,38 @@ public class ItinerarioService {
         )).collect(Collectors.toList());
     }
 
+    public ItinerarioResumoDTO buscarPorId(Long id, Usuario usuario) {
+        Itinerario it = itinerarioRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Itinerário não encontrado"));
+
+        if(!it.getUsuario().getId().equals(usuario.getId())) {
+            throw new RuntimeException("Acesso negado");
+        }
+        return toDTO(it);
+    }
+
+    @Transactional
+    public ItinerarioResumoDTO criar(ItinerarioRequest request, Usuario usuario) {
+        Itinerario novo = Itinerario.builder()
+                .name(request.name())
+                .destino(request.destination())
+                .inicio(request.inicio())
+                .fim(request.fim())
+                .totalOrcamento(request.totalOrcamento())
+                .usuario(usuario)
+                .build();
+
+        itinerarioRepository.save(novo);
+        return toDTO(novo);
+    }
+
+    private ItinerarioResumoDTO toDTO(Itinerario it) {
+        return new ItinerarioResumoDTO(
+                it.getId(),
+                it.getName(),
+                it.getInicio(),
+                it.getFim(),
+                it.getTotalOrcamento()
+        );
+    }
 }

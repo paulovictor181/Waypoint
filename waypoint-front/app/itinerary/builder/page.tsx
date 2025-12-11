@@ -3,10 +3,13 @@
 import { RightNavBar } from "@/components/rightNavBar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import api from "@/lib/api";
 import { fetchPOIsInBounds, getRoute, POI } from "@/lib/osm";
 import { MapPin, Plus, Trash2 } from "lucide-react";
 import dynamic from "next/dynamic";
-import { useEffect, useMemo, useRef, useState } from "react"; // Adicione useRef
+import { useSearchParams } from "next/navigation";
+import { useRouter } from "next/router";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 const ItineraryMap = dynamic(() => import("@/components/ItineraryMap"), {
   ssr: false,
@@ -36,6 +39,9 @@ type DiaItinerario = {
 };
 
 export default function ItineraryPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
   const [nomeItinerario, setNomeItinerario] = useState("");
   const [dias, setDias] = useState<DiaItinerario[]>([{ dia: 1, locais: [] }]);
   const [selectedDayIndex, setSelectedDayIndex] = useState(0);
@@ -48,9 +54,39 @@ export default function ItineraryPage() {
   const [suggestedPOIs, setSuggestedPOIs] = useState<POI[]>([]);
   const [isLoadingPOIs, setIsLoadingPOIs] = useState(false);
   const [routePath, setRoutePath] = useState<[number, number][]>([]);
+  const itineraryId = searchParams.get("id");
+  const [itineraryData, setItineraryData] = useState<any>(null);
 
   // Referência para o timer do debounce
   const debounceTimer = useRef<NodeJS.Timeout | null>(null);
+
+  // Efeito para carregar dados do Backend se tiver ID
+  useEffect(() => {
+    if (itineraryId) {
+      api
+        .get(`/itinerarios/${itineraryId}`)
+        .then((response) => {
+          const data = response.data;
+          setItineraryData(data);
+          // Recalcula os dias com base nas datas vindas do banco
+          if (data.startDate && data.endDate) {
+            const start = new Date(data.startDate);
+            const end = new Date(data.endDate);
+            const diffTime = Math.abs(end.getTime() - start.getTime());
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+            setDias(
+              Array.from({ length: diffDays }, (_, i) => ({
+                dia: i + 1,
+                locais: [],
+              }))
+            );
+          }
+        })
+        .catch((err) => console.error("Erro ao carregar itinerário", err));
+    }
+  }, [itineraryId]);
+
+  const displayName = itineraryData?.name || "Novo Itinerário";
 
   // EFEITO: Sempre que os locais do dia mudam, recalcula a rota
   useEffect(() => {

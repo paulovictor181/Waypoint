@@ -1,45 +1,65 @@
 "use client";
 
+import { DatePickerWithRange } from "@/components/DatePickerWithRange";
 import { RightNavBar } from "@/components/rightNavBar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, Calendar as CalendarIcon, Plane } from "lucide-react";
+import api from "@/lib/api"; // Axios configurado
+import { ArrowLeft, Loader2, Plane } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { DateRange } from "react-day-picker";
 
 export default function NewItineraryPage() {
   const router = useRouter();
-  const [formData, setFormData] = useState({
-    nome: "",
-    dataInicio: "",
-    dataFim: "",
-  });
+  const [loading, setLoading] = useState(false);
 
-  const handleContinue = () => {
-    if (!formData.nome || !formData.dataInicio || !formData.dataFim) {
+  // Estado do formulário
+  const [nome, setNome] = useState("");
+  const [destino, setDestino] = useState(""); // Novo campo
+  const [orcamento, setOrcamento] = useState(""); // Novo campo
+  const [dateRange, setDateRange] = useState<DateRange | undefined>();
+
+  const handleCreate = async () => {
+    if (!nome || !destino || !orcamento || !dateRange?.from || !dateRange?.to) {
       alert("Por favor, preencha todos os campos.");
       return;
     }
 
-    // Passa os dados via URL params para a tela de builder
-    const params = new URLSearchParams();
-    params.set("name", formData.nome);
-    params.set("start", formData.dataInicio);
-    params.set("end", formData.dataFim);
+    setLoading(true);
 
-    router.push(`/itinerary/builder?${params.toString()}`);
+    try {
+      // 1. Envia para o Backend
+      const response = await api.post("/itinerarios", {
+        name: nome,
+        destination: destino,
+        startDate: dateRange.from.toISOString().split("T")[0], // YYYY-MM-DD
+        endDate: dateRange.to.toISOString().split("T")[0],
+        totalBudget: parseFloat(orcamento),
+      });
+
+      const novoItinerario = response.data;
+
+      // 2. Redireciona para o Builder passando o ID
+      router.push(`/itinerary/builder?id=${novoItinerario.id}`);
+    } catch (error) {
+      console.error("Erro ao criar itinerário:", error);
+      alert("Erro ao criar itinerário. Tente novamente.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div className="flex h-screen w-full bg-white text-gray-900">
       <RightNavBar />
 
-      <main className="flex flex-1 flex-col bg-gray-50 p-6 md:p-12 items-center justify-center">
+      <main className="flex flex-1 flex-col bg-gray-50 p-6 md:p-12 items-center justify-center overflow-y-auto">
         <div className="w-full max-w-2xl">
           <Button
             variant="ghost"
             onClick={() => router.back()}
-            className="mb-8 text-gray-500 hover:text-gray-900 -ml-4"
+            className="mb-6 text-gray-500 hover:text-gray-900 -ml-4"
           >
             <ArrowLeft className="mr-2 h-4 w-4" /> Voltar
           </Button>
@@ -51,67 +71,73 @@ export default function NewItineraryPage() {
               </div>
               <div>
                 <h1 className="text-3xl font-bold text-gray-900">
-                  Vamos começar!
+                  Nova Viagem
                 </h1>
                 <p className="text-gray-500">
-                  Dê um nome e escolha as datas da sua viagem.
+                  Defina os detalhes iniciais do seu roteiro.
                 </p>
               </div>
             </div>
 
             <div className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-gray-700">
+                    Nome do Itinerário
+                  </label>
+                  <Input
+                    placeholder="Ex: Mochilão Europa"
+                    value={nome}
+                    onChange={(e) => setNome(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-gray-700">
+                    Destino Principal
+                  </label>
+                  <Input
+                    placeholder="Ex: Paris, França"
+                    value={destino}
+                    onChange={(e) => setDestino(e.target.value)}
+                  />
+                </div>
+              </div>
+
               <div className="space-y-2">
                 <label className="text-sm font-semibold text-gray-700">
-                  Nome da Viagem
+                  Período
                 </label>
-                <Input
-                  placeholder="Ex: Férias em Natal, Mochilão Europa..."
-                  className="h-12 text-lg bg-gray-50 border-gray-200 focus:bg-white transition-colors"
-                  value={formData.nome}
-                  onChange={(e) =>
-                    setFormData({ ...formData, nome: e.target.value })
-                  }
+                <DatePickerWithRange
+                  date={dateRange}
+                  setDate={setDateRange}
+                  className="w-full"
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-                    <CalendarIcon className="h-4 w-4 text-gray-400" /> Data de
-                    Ida
-                  </label>
-                  <Input
-                    type="date"
-                    className="h-12 bg-gray-50 border-gray-200 focus:bg-white"
-                    value={formData.dataInicio}
-                    onChange={(e) =>
-                      setFormData({ ...formData, dataInicio: e.target.value })
-                    }
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-                    <CalendarIcon className="h-4 w-4 text-gray-400" /> Data de
-                    Volta
-                  </label>
-                  <Input
-                    type="date"
-                    className="h-12 bg-gray-50 border-gray-200 focus:bg-white"
-                    value={formData.dataFim}
-                    onChange={(e) =>
-                      setFormData({ ...formData, dataFim: e.target.value })
-                    }
-                  />
-                </div>
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-gray-700">
+                  Orçamento Total (R$)
+                </label>
+                <Input
+                  type="number"
+                  placeholder="Ex: 5000.00"
+                  value={orcamento}
+                  onChange={(e) => setOrcamento(e.target.value)}
+                />
               </div>
             </div>
 
             <div className="mt-10 flex justify-end">
               <Button
-                onClick={handleContinue}
-                className="bg-orange-500 hover:bg-orange-600 text-white font-bold h-12 px-8 rounded-xl text-lg shadow-lg shadow-orange-200 transition-transform active:scale-95"
+                onClick={handleCreate}
+                disabled={loading}
+                className="bg-orange-500 hover:bg-orange-600 text-white font-bold h-12 px-8 rounded-xl text-lg shadow-lg"
               >
-                Criar Itinerário
+                {loading ? (
+                  <Loader2 className="animate-spin mr-2" />
+                ) : (
+                  "Criar e Planejar"
+                )}
               </Button>
             </div>
           </div>

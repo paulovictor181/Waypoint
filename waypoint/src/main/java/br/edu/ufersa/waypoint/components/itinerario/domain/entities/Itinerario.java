@@ -26,6 +26,7 @@ public class Itinerario {
     private Long id;
     
     private String name;
+    private String destino;
     private BigDecimal totalOrcamento;
 
     private LocalDate inicio;

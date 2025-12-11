@@ -3,12 +3,11 @@
 import { RightNavBar } from "@/components/rightNavBar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { fetchNearbyPOIs, POI } from "@/lib/osm"; // Importe a função criada
+import { fetchPOIsInBounds, POI } from "@/lib/osm";
 import { MapPin, Plus, Trash2 } from "lucide-react";
 import dynamic from "next/dynamic";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react"; // Adicione useRef
 
-// Importação dinâmica do mapa para evitar erro de 'window not found'
 const ItineraryMap = dynamic(() => import("@/components/ItineraryMap"), {
   ssr: false,
   loading: () => (
@@ -18,7 +17,7 @@ const ItineraryMap = dynamic(() => import("@/components/ItineraryMap"), {
   ),
 });
 
-// Tipos baseados nas suas entidades Java
+// ... (Tipos Custo, Local, DiaItinerario mantidos iguais) ...
 type Custo = {
   description: string;
   amount: number;
@@ -37,66 +36,68 @@ type DiaItinerario = {
 };
 
 export default function ItineraryPage() {
-  // Estado do Itinerário
   const [nomeItinerario, setNomeItinerario] = useState("");
   const [dias, setDias] = useState<DiaItinerario[]>([{ dia: 1, locais: [] }]);
-
-  // Estado temporário para adição
   const [selectedDayIndex, setSelectedDayIndex] = useState(0);
   const [tempLocation, setTempLocation] = useState<{
     lat: number;
     lng: number;
   } | null>(null);
   const [tempLocationName, setTempLocationName] = useState("");
-  // Novo estado para os POIs sugeridos pelo mapa (pontos azuis/verdes, por exemplo)
+
   const [suggestedPOIs, setSuggestedPOIs] = useState<POI[]>([]);
   const [isLoadingPOIs, setIsLoadingPOIs] = useState(false);
 
-  // Modifique o handleMapClick para, além de selecionar o ponto, buscar o que tem em volta
+  // Referência para o timer do debounce
+  const debounceTimer = useRef<NodeJS.Timeout | null>(null);
+
+  // FUNÇÃO ATUALIZADA COM DEBOUNCE
+  const handleMapMove = (bounds: any) => {
+    if (debounceTimer.current) clearTimeout(debounceTimer.current);
+
+    debounceTimer.current = setTimeout(async () => {
+      setIsLoadingPOIs(true);
+      const north = bounds.getNorth();
+      const south = bounds.getSouth();
+      const east = bounds.getEast();
+      const west = bounds.getWest();
+
+      const pois = await fetchPOIsInBounds(north, south, east, west, 100);
+      setSuggestedPOIs(pois);
+      setIsLoadingPOIs(false);
+    }, 1000); // Espera 1 segundo após parar de mover
+  };
+
   const handleMapClick = async (lat: number, lng: number) => {
     setTempLocation({ lat, lng });
-    setTempLocationName("Carregando endereço..."); // Feedback visual
+    setTempLocationName("Carregando endereço...");
 
-    // 1. Tentar descobrir o nome da rua/local (Geocoding Reverso do Nominatim)
     try {
       const resp = await fetch(
         `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`
       );
       const data = await resp.json();
-      setTempLocationName(data.display_name.split(",")[0]); // Pega só a primeira parte do endereço
+      setTempLocationName(
+        data.display_name
+          ? data.display_name.split(",")[0]
+          : "Local Selecionado"
+      );
     } catch (e) {
       setTempLocationName("Local Selecionado");
     }
-
-    // 2. Buscar locais interessantes ao redor (Overpass)
-    setIsLoadingPOIs(true);
-    try {
-      const pois = await fetchNearbyPOIs(lat, lng, 2000); // Raio de 2km
-      console.log("POIs encontrados:", pois);
-      setSuggestedPOIs(pois || []);
-    } catch (error) {
-      console.error("Erro ao buscar POIs:", error);
-      setSuggestedPOIs([]);
-    } finally {
-      setIsLoadingPOIs(false);
-    }
   };
 
-  // Função auxiliar para quando clicar em um POI sugerido, preencher o formulário
   const selectPOI = (poi: POI) => {
     setTempLocation({ lat: poi.lat, lng: poi.lng });
     setTempLocationName(poi.name);
   };
 
-  // Adicionar novo dia
   const addDay = () => {
     setDias([...dias, { dia: dias.length + 1, locais: [] }]);
   };
 
-  // Confirmar local selecionado no mapa para o dia ativo
   const addLocationToDay = () => {
     if (!tempLocation || !tempLocationName) return;
-
     const newLocais = [...dias[selectedDayIndex].locais];
     newLocais.push({
       name: tempLocationName,
@@ -104,17 +105,13 @@ export default function ItineraryPage() {
       lng: tempLocation.lng,
       custos: [],
     });
-
     const newDias = [...dias];
     newDias[selectedDayIndex].locais = newLocais;
     setDias(newDias);
-
-    // Resetar campos temporários
     setTempLocation(null);
     setTempLocationName("");
   };
 
-  // Adicionar custo a um local específico
   const addCostToLocation = (dayIndex: number, locationIndex: number) => {
     const newDias = [...dias];
     newDias[dayIndex].locais[locationIndex].custos.push({
@@ -124,7 +121,6 @@ export default function ItineraryPage() {
     setDias(newDias);
   };
 
-  // Atualizar valor do custo
   const updateCost = (
     dayIndex: number,
     locIndex: number,
@@ -139,7 +135,6 @@ export default function ItineraryPage() {
     setDias(newDias);
   };
 
-  // Calcular total (para exibir como no seu Java BigDecimal totalOrcamento)
   const totalOrcamento = useMemo(() => {
     return dias.reduce((acc, dia) => {
       return (
@@ -157,18 +152,16 @@ export default function ItineraryPage() {
     }, 0);
   }, [dias]);
 
-  // Preparar marcadores para o mapa
   const mapMarkers = dias.flatMap((d) =>
     d.locais.map((l) => ({ lat: l.lat, lng: l.lng, name: l.name }))
   );
 
   return (
     <div className="flex h-screen w-full bg-white text-gray-900">
-      {/* Navbar Lateral */}
       <RightNavBar />
 
       <main className="flex flex-1 overflow-hidden">
-        {/* Lado Esquerdo: Formulário (50%) */}
+        {/* Lado Esquerdo */}
         <div className="w-1/2 flex flex-col p-6 overflow-y-auto border-r border-gray-200">
           <h1 className="text-2xl font-bold mb-6 text-orange-600">
             Planejar Itinerário
@@ -190,7 +183,6 @@ export default function ItineraryPage() {
             </p>
           </div>
 
-          {/* Seleção de Dias */}
           <div className="flex gap-2 mb-6 overflow-x-auto pb-2 shrink-0 sticky top-0 bg-white z-10 py-4 border-b border-gray-100">
             {dias.map((d, index) => (
               <button
@@ -215,7 +207,6 @@ export default function ItineraryPage() {
             </Button>
           </div>
 
-          {/* Área de Adição de Local */}
           <div className="bg-orange-50 p-4 rounded-lg mb-6 border border-orange-100">
             <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
               <MapPin className="h-4 w-4 text-orange-500" />
@@ -224,10 +215,9 @@ export default function ItineraryPage() {
             <p className="text-xs text-gray-500 mb-3">
               Clique no mapa para selecionar as coordenadas.
             </p>
-
             <div className="flex gap-2">
               <Input
-                placeholder="Nome do local (ex: Praia de Ponta Negra)"
+                placeholder="Nome do local"
                 value={tempLocationName}
                 onChange={(e) => setTempLocationName(e.target.value)}
                 className="bg-white"
@@ -240,22 +230,10 @@ export default function ItineraryPage() {
                 Adicionar
               </Button>
             </div>
-            {tempLocation && (
-              <p className="text-xs text-green-600 mt-2">
-                Ponto selecionado: {tempLocation.lat.toFixed(4)},{" "}
-                {tempLocation.lng.toFixed(4)}
-              </p>
-            )}
           </div>
 
-          {/* Lista de Locais do Dia Selecionado */}
+          {/* Lista de Locais */}
           <div className="space-y-6">
-            {dias[selectedDayIndex].locais.length === 0 && (
-              <p className="text-gray-400 text-center italic mt-10">
-                Nenhum local adicionado para este dia.
-              </p>
-            )}
-
             {dias[selectedDayIndex].locais.map((local, locIndex) => (
               <div
                 key={locIndex}
@@ -271,13 +249,11 @@ export default function ItineraryPage() {
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
-
-                {/* Custos do Local */}
                 <div className="space-y-2 pl-4 border-l-2 border-gray-100">
                   {local.custos.map((custo, costIndex) => (
                     <div key={costIndex} className="flex gap-2 items-center">
                       <Input
-                        placeholder="Descrição (ex: Jantar)"
+                        placeholder="Descrição"
                         value={custo.description}
                         onChange={(e) =>
                           updateCost(
@@ -290,26 +266,21 @@ export default function ItineraryPage() {
                         }
                         className="flex-1 h-8 text-sm"
                       />
-                      <div className="relative w-32">
-                        <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-500 text-xs">
-                          R$
-                        </span>
-                        <Input
-                          type="number"
-                          placeholder="0.00"
-                          value={custo.amount}
-                          onChange={(e) =>
-                            updateCost(
-                              selectedDayIndex,
-                              locIndex,
-                              costIndex,
-                              "amount",
-                              e.target.value
-                            )
-                          }
-                          className="h-8 text-sm pl-6"
-                        />
-                      </div>
+                      <Input
+                        type="number"
+                        placeholder="0.00"
+                        value={custo.amount}
+                        onChange={(e) =>
+                          updateCost(
+                            selectedDayIndex,
+                            locIndex,
+                            costIndex,
+                            "amount",
+                            e.target.value
+                          )
+                        }
+                        className="w-24 h-8 text-sm"
+                      />
                     </div>
                   ))}
                   <Button
@@ -318,7 +289,7 @@ export default function ItineraryPage() {
                     onClick={() =>
                       addCostToLocation(selectedDayIndex, locIndex)
                     }
-                    className="text-orange-600 hover:text-orange-700 hover:bg-orange-50 text-xs p-0 h-auto mt-2"
+                    className="text-orange-600 text-xs p-0 h-auto mt-2"
                   >
                     + Adicionar custo
                   </Button>
@@ -334,7 +305,7 @@ export default function ItineraryPage() {
           </div>
         </div>
 
-        {/* Lado Direito: Mapa (50%) */}
+        {/* Lado Direito: Mapa */}
         <div className="w-1/2 h-full bg-gray-100 relative">
           <ItineraryMap
             markers={mapMarkers}
@@ -342,7 +313,13 @@ export default function ItineraryPage() {
             selectedPosition={tempLocation}
             suggestedMarkers={suggestedPOIs}
             onPoiClick={selectPOI}
+            onBoundsChange={handleMapMove}
           />
+          {isLoadingPOIs && (
+            <div className="absolute top-4 right-4 z-[1000] bg-white px-3 py-1 rounded shadow text-xs font-medium text-orange-600">
+              Buscando locais...
+            </div>
+          )}
         </div>
       </main>
     </div>

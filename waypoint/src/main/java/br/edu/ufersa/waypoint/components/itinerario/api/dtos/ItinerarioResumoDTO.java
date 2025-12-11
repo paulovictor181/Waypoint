@@ -1,4 +1,12 @@
 package br.edu.ufersa.waypoint.components.itinerario.api.dtos;
 
-public record ItinerarioResumoDTO() {
-}
+import java.math.BigDecimal;
+import java.time.LocalDate;
+
+public record ItinerarioResumoDTO(
+        Long id,
+        String name,
+        LocalDate dataInicio,
+        LocalDate dataFim,
+        BigDecimal totalOrcamento
+) {}

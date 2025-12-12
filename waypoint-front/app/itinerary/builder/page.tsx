@@ -70,6 +70,43 @@ export default function ItineraryPage() {
     -5.187978, -37.344265,
   ]);
 
+  const handleSaveItinerary = async () => {
+    if (!itineraryId || !itineraryData) return;
+
+    try {
+      const payload = {
+        name: nomeItinerario,
+        inicio: itineraryData.inicio,
+        fim: itineraryData.fim,
+        totalOrcamento: parseFloat(orcamentoTotal.toString()),
+        dias: dias.map((dia) => ({
+          Numeracao: dia.dia,
+          locais: dia.locais.map((local) => ({
+            osmId: local.osmId,
+            name: local.name,
+            latitude: local.lat,
+            longitude: local.lng,
+            custos: local.custos.map((custo) => ({
+              description: custo.description,
+              amount: custo.amount,
+            })),
+          })),
+        })),
+      };
+
+      console.log("Enviando Payload:", JSON.stringify(payload, null, 2));
+
+      await api.put(`/itinerarios/${itineraryId}`, payload);
+
+      alert("Itinerário salvo com sucesso!");
+
+      await fetchItinerary();
+    } catch (error) {
+      console.error("Erro ao salvar itinerário:", error);
+      alert("Erro ao salvar. Verifique o console.");
+    }
+  };
+
   useEffect(() => {
     if (itineraryId) {
       api
@@ -438,7 +475,10 @@ export default function ItineraryPage() {
           </div>
 
           <div className="mt-auto pt-6">
-            <Button className="w-full bg-green-600 hover:bg-green-700 text-white text-lg py-6">
+            <Button
+              onClick={handleSaveItinerary}
+              className="w-full bg-green-600 hover:bg-green-700 text-white text-lg py-6"
+            >
               Salvar Itinerário
             </Button>
           </div>
@@ -465,4 +505,7 @@ export default function ItineraryPage() {
       </main>
     </div>
   );
+}
+function fetchItinerary() {
+  throw new Error("Function not implemented.");
 }

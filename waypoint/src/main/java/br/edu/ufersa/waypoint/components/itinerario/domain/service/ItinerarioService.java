@@ -1,5 +1,6 @@
 package br.edu.ufersa.waypoint.components.itinerario.domain.service;
 
+import br.edu.ufersa.waypoint.components.avaliacao.domain.entities.Avaliacao;
 import br.edu.ufersa.waypoint.components.cidade.domain.entities.Cidade;
 import br.edu.ufersa.waypoint.components.cidade.domain.repository.CidadeRepository;
 import br.edu.ufersa.waypoint.components.custo.api.dtos.CustoRequest;
@@ -203,6 +204,13 @@ public class ItinerarioService {
 
                 List<Custo> custos = custoRepository.findByDiaIdAndLocalId(dia.getId(), local.getId());
 
+                Double media = local.getAvaliacoes().isEmpty() ? 0.0 :
+                        local.getAvaliacoes().stream().mapToInt(Avaliacao::getNota).average().orElse(0.0);
+
+                String foto = local.getAvaliacoes().stream()
+                        .filter(a -> a.getFotoUrl() != null && !a.getFotoUrl().isEmpty())
+                        .map(Avaliacao::getFotoUrl).findFirst().orElse(null);
+
                 return new LocalResponse(
                         local.getId(),
                         local.getOsmId(),
@@ -210,7 +218,9 @@ public class ItinerarioService {
                         local.getLatitude(),
                         local.getLongitude(),
                         0,
-                        custos
+                        custos,
+                        media,
+                        foto
                 );
             }).toList();
 

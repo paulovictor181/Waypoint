@@ -3,6 +3,7 @@ package br.edu.ufersa.waypoint.components.local.domain.entities;
 import java.util.ArrayList;
 import java.util.List;
 
+import br.edu.ufersa.waypoint.components.avaliacao.domain.entities.Avaliacao;
 import br.edu.ufersa.waypoint.components.cidade.domain.entities.Cidade;
 import br.edu.ufersa.waypoint.components.custo.domain.entities.Custo;
 import br.edu.ufersa.waypoint.components.dia.domain.entities.Dia;
@@ -34,5 +35,8 @@ public class Local {
     @ManyToMany(mappedBy = "locais")
     @JsonIgnore
     private List<Dia> dias = new ArrayList<>();
+
+    @OneToMany(mappedBy = "local", cascade = CascadeType.ALL)
+    private List<Avaliacao> avaliacoes = new ArrayList<>();
 
 }

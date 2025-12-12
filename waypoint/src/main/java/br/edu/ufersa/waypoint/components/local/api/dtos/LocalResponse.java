@@ -11,5 +11,7 @@ public record LocalResponse(
         Double latitude,
         Double longitude,
         Integer numero,
-        List<Custo> custosDesteLocal
+        List<Custo> custosDesteLocal,
+        Double mediaNota,
+        String ultimaFoto
 ) {}

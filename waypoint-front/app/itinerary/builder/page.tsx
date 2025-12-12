@@ -1,5 +1,5 @@
 "use client";
-
+import { StarRating } from "@/components/StarRating";
 import { RightNavBar } from "@/components/rightNavBar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,6 +28,7 @@ type Custo = {
 };
 
 type Local = {
+  ultimaFoto: any;
   id: number;
   osmId: number;
   name: string;
@@ -70,6 +71,33 @@ export default function ItineraryPage() {
   const [mapCenter, setMapCenter] = useState<[number, number]>([
     -5.187978, -37.344265,
   ]);
+
+  const [ratingModalOpen, setRatingModalOpen] = useState(false);
+  const [selectedLocalForReview, setSelectedLocalForReview] =
+    useState<any>(null);
+  const [newRating, setNewRating] = useState(0);
+  const [newComment, setNewComment] = useState("");
+  const [newPhotoUrl, setNewPhotoUrl] = useState("");
+
+  const handleSubmitReview = async () => {
+    if (!selectedLocalForReview) return;
+
+    try {
+      await api.post("/rating", {
+        localOsmId: selectedLocalForReview.osmId,
+        nomeLocal: selectedLocalForReview.name,
+        lat: selectedLocalForReview.lat,
+        lon: selectedLocalForReview.lng,
+        nota: newRating,
+        comentario: newComment,
+        fotoUrl: newPhotoUrl,
+      });
+      alert("Avaliação enviada!");
+      setRatingModalOpen(false);
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
   const handleSaveItinerary = async () => {
     if (!itineraryId || !itineraryData) return;
@@ -454,6 +482,7 @@ export default function ItineraryPage() {
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
+
                 <div className="space-y-2 pl-4 border-l-2 border-gray-100">
                   {local.custos.map((custo, costIndex) => (
                     <div key={costIndex} className="flex gap-2 items-center">
@@ -499,6 +528,41 @@ export default function ItineraryPage() {
                     + Adicionar custo
                   </Button>
                 </div>
+                <div className="mt-2 flex items-center justify-between">
+                  {/* Se o local já tiver nota média (vindo do banco), mostra as estrelas amarelas */}
+                  {local.mediaNota > 0 && (
+                    <div className="flex items-center gap-1 text-sm text-yellow-600">
+                      <StarRating rating={local.mediaNota} />
+                      <span>({local.mediaNota.toFixed(1)})</span>
+                    </div>
+                  )}
+
+                  {/* Botão "Avaliar". Só aparece se o local tiver um ID real (osmId > 0) */}
+                  {local.osmId > 0 && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-xs text-blue-600 hover:text-blue-800"
+                      onClick={() => {
+                        setSelectedLocalForReview(local); // "Estou avaliando ESTE local"
+                        setNewRating(0); // Reseta o formulário
+                        setNewComment("");
+                        setNewPhotoUrl("");
+                        setRatingModalOpen(true); // Abre a janela
+                      }}
+                    >
+                      Avaliar
+                    </Button>
+                  )}
+                </div>
+
+                {local.ultimaFoto && (
+                  <img
+                    src={local.ultimaFoto}
+                    alt="Foto do local"
+                    className="w-full h-32 object-cover rounded-md mt-2"
+                  />
+                )}
               </div>
             ))}
           </div>
@@ -532,6 +596,63 @@ export default function ItineraryPage() {
           )}
         </div>
       </main>
+
+      {/* Só renderiza isso se ratingModalOpen for VERDADEIRO */}
+      {ratingModalOpen && (
+        // Fundo preto transparente que cobre a tela inteira
+        <div className="fixed inset-0 bg-black/50 z-[1000] flex items-center justify-center p-4">
+          {/* A caixa branca no meio da tela */}
+          <div className="bg-white rounded-xl p-6 w-full max-w-md shadow-2xl">
+            <h3 className="text-xl font-bold mb-4">
+              Avaliar {selectedLocalForReview?.name}
+            </h3>
+
+            <div className="space-y-4">
+              {/* Seletor de Estrelas (interativo) */}
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Sua Nota
+                </label>
+                <StarRating
+                  rating={newRating}
+                  setRating={setNewRating}
+                  size={24}
+                />
+              </div>
+
+              {/* Campo de Comentário */}
+              <Input
+                placeholder="Conte sua experiência..."
+                value={newComment}
+                onChange={(e) => setNewComment(e.target.value)}
+              />
+
+              {/* Campo de Foto */}
+              <Input
+                placeholder="URL da Foto (opcional)"
+                value={newPhotoUrl}
+                onChange={(e) => setNewPhotoUrl(e.target.value)}
+              />
+
+              {/* Botões de Ação */}
+              <div className="flex gap-2 justify-end mt-4">
+                <Button
+                  variant="ghost"
+                  onClick={() => setRatingModalOpen(false)}
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  onClick={handleSubmitReview}
+                  className="bg-orange-500 text-white"
+                >
+                  Enviar
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

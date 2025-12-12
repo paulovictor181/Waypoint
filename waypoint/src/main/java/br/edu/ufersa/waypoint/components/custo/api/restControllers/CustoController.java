@@ -1,11 +1,10 @@
 package br.edu.ufersa.waypoint.components.custo.api.restControllers;
 
-import br.edu.ufersa.waypoint.components.custo.api.dtos.CustoRequestDTO;
+import br.edu.ufersa.waypoint.components.custo.api.dtos.CustoRequest;
 import br.edu.ufersa.waypoint.components.custo.domain.entities.Custo;
 import br.edu.ufersa.waypoint.components.custo.domain.service.CustoService;
 import br.edu.ufersa.waypoint.components.usuario.domain.entities.Usuario;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -34,10 +33,6 @@ public class CustoController {
         return ResponseEntity.ok(custoService.update(id, custo));
     }
 
-    @PostMapping
-    public ResponseEntity<Custo> adicionarCusto(@RequestBody CustoRequestDTO dto, @AuthenticationPrincipal Usuario usuario) {
-        return ResponseEntity.ok(custoService.adicionarCusto(dto, usuario));
-    }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> removerCusto(@PathVariable Long id) {

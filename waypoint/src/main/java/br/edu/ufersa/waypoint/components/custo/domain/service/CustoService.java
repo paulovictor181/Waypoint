@@ -1,6 +1,6 @@
 package br.edu.ufersa.waypoint.components.custo.domain.service;
 
-import br.edu.ufersa.waypoint.components.custo.api.dtos.CustoRequestDTO;
+import br.edu.ufersa.waypoint.components.custo.api.dtos.CustoRequest;
 import br.edu.ufersa.waypoint.components.custo.domain.entities.Custo;
 import br.edu.ufersa.waypoint.components.custo.domain.repository.CustoRepository;
 import br.edu.ufersa.waypoint.components.dia.domain.repository.DiaRepository;
@@ -13,7 +13,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -23,6 +22,7 @@ public class CustoService {
     private final LocalRepository localRepository;
     private final DiaRepository diaRepository;
     private final ItinerarioRepository itinerarioRepository;
+
     public List<Custo> findAll() {
         return custoRepository.findAll();
     }
@@ -37,32 +37,6 @@ public class CustoService {
         return custoRepository.save(custo);
     }
 
-    @Transactional
-    public Custo adicionarCusto(CustoRequestDTO dto, Usuario usuario) {
-        var itinerario = itinerarioRepository.findById(dto.itinerarioId())
-                .orElseThrow(() -> new RuntimeException("Itinerário não encontrado"));
-
-        if (!itinerario.getUsuario().getId().equals(usuario.getId())) {
-            throw new RuntimeException("Acesso negado");
-        }
-
-        var dia = diaRepository.findById(dto.diaId())
-                .orElseThrow(() -> new RuntimeException("Dia não encontrado"));
-
-        var local = localRepository.findById(dto.localId())
-                .orElseThrow(() -> new RuntimeException("Local não encontrado"));
-
-        Custo custo = Custo.builder()
-                .description(dto.description())
-                .amount(dto.amount())
-                .itinerario(itinerario)
-                .dia(dia)
-                .local(local)
-                .usuario(usuario)
-                .build();
-
-        return custoRepository.save(custo);
-    }
 
     @Transactional
     public Custo update(long id, Custo custoAtualizado) {

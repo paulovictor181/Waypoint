@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import br.edu.ufersa.waypoint.components.cidade.domain.entities.Cidade;
+import br.edu.ufersa.waypoint.components.dia.domain.entities.Dia;
 import br.edu.ufersa.waypoint.components.usuario.domain.entities.Usuario;
 import br.edu.ufersa.waypoint.components.local.domain.entities.Local;
 
@@ -42,5 +43,6 @@ public class Itinerario {
     private Usuario usuario;
 
     @OneToMany(mappedBy = "itinerario", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Local> locais = new ArrayList<>();
+    @OrderBy("numero ASC")
+    private List<Dia> dias = new ArrayList<>();
 }

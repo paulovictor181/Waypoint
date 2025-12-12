@@ -22,20 +22,24 @@ const ItineraryMap = dynamic(() => import("@/components/ItineraryMap"), {
 });
 
 type Custo = {
+  id?: number;
   description: string;
   amount: number;
 };
 
 type Local = {
+  id: number;
+  osmId: number;
   name: string;
   lat: number;
   lng: number;
+  dia: number;
   custos: Custo[];
 };
 
 type DiaItinerario = {
   dia: number;
-  displayDate: string; // Ex: "12/12"
+  displayDate: string;
   locais: Local[];
 };
 
@@ -183,6 +187,9 @@ export default function ItineraryPage() {
       lat: tempLocation.lat,
       lng: tempLocation.lng,
       custos: [],
+      id: 0,
+      osmId: 0,
+      dia: 0,
     });
     const newDias = [...dias];
     newDias[selectedDayIndex].locais = newLocais;
@@ -262,20 +269,56 @@ export default function ItineraryPage() {
             Planejar Itinerário
           </h1>
 
-          <div className="mb-6 space-y-2">
-            <label className="text-sm font-semibold">Nome do Itinerário</label>
-            <Input
-              placeholder="Ex: Férias em Natal"
-              value={nomeItinerario}
-              onChange={(e) => setNomeItinerario(e.target.value)}
-              className="bg-gray-50"
-            />
-            <p className="text-sm text-gray-500">
-              Orçamento Total Estimado:{" "}
-              <span className="font-bold text-green-600">
-                R$ {totalOrcamento.toFixed(2)}
-              </span>
-            </p>
+          <div className="mb-6 space-y-4">
+            {/* Campo Nome do Itinerário */}
+            <div className="space-y-2">
+              <label className="text-sm font-semibold">
+                Nome do Itinerário
+              </label>
+              <Input
+                placeholder="Ex: Férias em Natal"
+                value={nomeItinerario}
+                onChange={(e) => setNomeItinerario(e.target.value)}
+                className="bg-gray-50"
+              />
+            </div>
+
+            {/* Campo Orçamento Inicial (Agora editável) */}
+            <div className="space-y-2">
+              <label className="text-sm font-semibold">
+                Orçamento Inicial (R$)
+              </label>
+              <Input
+                type="number"
+                placeholder="0.00"
+                value={orcamentoTotal}
+                onChange={(e) => setOrcamentoTotal(e.target.value)}
+                className="bg-gray-50"
+              />
+            </div>
+
+            {/* Resumo Financeiro */}
+            <div className="pt-2 border-t border-gray-100 flex flex-col gap-1">
+              <p className="text-sm text-gray-500 flex justify-between">
+                <span>Total Planejado (Gastos):</span>
+                <span className="font-bold text-orange-600">
+                  R$ {totalOrcamento.toFixed(2)}
+                </span>
+              </p>
+
+              <p className="text-sm text-gray-500 flex justify-between">
+                <span>Saldo Restante:</span>
+                <span
+                  className={`font-bold ${
+                    Number(orcamentoTotal) - totalOrcamento >= 0
+                      ? "text-green-600"
+                      : "text-red-500"
+                  }`}
+                >
+                  R$ {(Number(orcamentoTotal) - totalOrcamento).toFixed(2)}
+                </span>
+              </p>
+            </div>
           </div>
 
           <div className="flex gap-2 mb-6 overflow-x-auto pb-2 shrink-0 sticky top-0 bg-white z-10 py-4 border-b border-gray-100">

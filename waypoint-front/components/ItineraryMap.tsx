@@ -60,7 +60,6 @@ const tempIcon = createCustomIcon(
   "bg-blue-500"
 );
 
-// Função para escolher ícone baseado no tipo do POI
 const getPoiIcon = (type: string) => {
   let icon = <MapPin className="w-4 h-4" />;
   let color = "bg-gray-500";
@@ -90,11 +89,9 @@ const getPoiIcon = (type: string) => {
   return createCustomIcon(icon, color);
 };
 
-// --- COMPONENTE AUXILIAR PARA RECENTRALIZAR ---
 function RecenterAutomatically({ lat, lng }: { lat: number; lng: number }) {
   const map = useMap();
   useEffect(() => {
-    // Só atualiza se as coordenadas forem válidas
     if (lat !== undefined && lng !== undefined) {
       map.setView([lat, lng]);
     }
@@ -102,7 +99,6 @@ function RecenterAutomatically({ lat, lng }: { lat: number; lng: number }) {
   return null;
 }
 
-// --- HANDLER DE EVENTOS DO MAPA ---
 function MapEventsHandler({
   onLocationSelect,
   onBoundsChange,
@@ -204,7 +200,6 @@ export default function ItineraryMap({
         {/* 1. Sugestões */}
         {suggestedMarkers.map((poi, idx) => (
           <Marker
-            // FIX: Usar uma chave única baseada na posição evita o erro _leaflet_pos
             key={`poi-${poi.lat}-${poi.lng}-${idx}`}
             position={[poi.lat, poi.lng]}
             icon={getPoiIcon(poi.type)}
@@ -226,7 +221,6 @@ export default function ItineraryMap({
         {/* 2. Marcadores Salvos */}
         {markers.map((marker, idx) => (
           <Marker
-            // FIX: Chave única combinando lat/lng para garantir recriação correta
             key={`marker-${marker.lat}-${marker.lng}-${idx}`}
             position={[marker.lat, marker.lng]}
             icon={savedIcon}
@@ -251,7 +245,7 @@ export default function ItineraryMap({
         )}
       </MapContainer>
 
-      {/* CARD DE DETALHES (Mantido igual) */}
+      {/* CARD DE DETALHES */}
       {activePOI && (
         <div className="absolute bottom-6 left-6 z-[500] w-80 bg-white rounded-xl shadow-2xl border-l-4 border-orange-500 overflow-hidden animate-in slide-in-from-bottom-4 fade-in duration-300">
           <div className="p-4 relative">

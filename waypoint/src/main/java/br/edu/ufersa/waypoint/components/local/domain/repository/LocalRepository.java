@@ -5,6 +5,9 @@ import org.springframework.stereotype.Repository;
 
 import br.edu.ufersa.waypoint.components.local.domain.entities.Local;
 
+import java.util.Optional;
+
 @Repository
 public interface LocalRepository extends JpaRepository<Local, Long> {
+    Optional<Local> findByOsmId(Long osmId);
 }

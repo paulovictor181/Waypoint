@@ -1,6 +1,7 @@
 // waypoint-front/lib/osm.ts
 
 export interface POI {
+  id: number;
   lat: number;
   lng: number;
   name: string;
@@ -68,6 +69,7 @@ export async function fetchPOIsInBounds(
         if (city) address += ` - ${city}`;
 
         return {
+          id: el.id,
           lat: el.lat,
           lng: el.lon,
           name: name,

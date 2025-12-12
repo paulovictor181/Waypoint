@@ -1,10 +1,10 @@
 "use client";
 
+import api from "@/lib/api";
 import L from "leaflet";
 import {
   Camera,
   Coffee,
-  Globe,
   Landmark,
   MapPin,
   Phone,
@@ -23,6 +23,7 @@ import {
   useMap,
   useMapEvents,
 } from "react-leaflet";
+import { StarRating } from "./StarRating";
 
 // --- FUNÇÃO PARA CRIAR ÍCONES PERSONALIZADOS ---
 const createCustomIcon = (
@@ -163,6 +164,22 @@ export default function ItineraryMap({
 }: ItineraryMapProps) {
   const [activePOI, setActivePOI] = useState<any>(null);
 
+  const [reviews, setReviews] = useState<any[]>([]);
+  const [loadingReviews, setLoadingReviews] = useState(false);
+
+  useEffect(() => {
+    if (activePOI && activePOI.id) {
+      setLoadingReviews(true);
+      api
+        .get(`/rating/${activePOI.id}`)
+        .then((res) => setReviews(res.data))
+        .catch(() => setReviews([]))
+        .finally(() => setLoadingReviews(false));
+    } else {
+      setReviews([]);
+    }
+  }, [activePOI]);
+
   return (
     <div className="relative w-full h-full">
       <MapContainer
@@ -245,10 +262,10 @@ export default function ItineraryMap({
         )}
       </MapContainer>
 
-      {/* CARD DE DETALHES */}
       {activePOI && (
-        <div className="absolute bottom-6 left-6 z-[500] w-80 bg-white rounded-xl shadow-2xl border-l-4 border-orange-500 overflow-hidden animate-in slide-in-from-bottom-4 fade-in duration-300">
-          <div className="p-4 relative">
+        <div className="absolute bottom-6 left-6 z-[500] w-80 bg-white rounded-xl shadow-2xl border-l-4 border-orange-500 overflow-hidden animate-in slide-in-from-bottom-4 fade-in duration-300 max-h-[80vh] flex flex-col">
+          {/* Cabeçalho do Card (com scroll se necessário) */}
+          <div className="p-4 relative overflow-y-auto">
             <button
               onClick={() => setActivePOI(null)}
               className="absolute top-2 right-2 text-gray-400 hover:text-gray-600 bg-gray-100 rounded-full p-1 transition-colors"
@@ -259,50 +276,65 @@ export default function ItineraryMap({
             <h3 className="text-lg font-bold text-gray-900 pr-6 leading-tight mb-1">
               {activePOI.name}
             </h3>
-            <span className="inline-block px-2 py-0.5 rounded text-xs font-medium bg-orange-100 text-orange-700 capitalize mb-3">
-              {activePOI.type?.replace(/_/g, " ")}
-            </span>
 
-            <div className="space-y-2 text-sm text-gray-600">
-              {activePOI.cuisine && (
-                <div className="flex items-start gap-2">
-                  <Utensils className="h-4 w-4 text-gray-400 mt-0.5 shrink-0" />
-                  <span className="capitalize">
-                    {activePOI.cuisine.replace(/;/g, ", ")}
-                  </span>
-                </div>
-              )}
-
-              {activePOI.address && (
-                <div className="flex items-start gap-2">
-                  <MapPin className="h-4 w-4 text-gray-400 mt-0.5 shrink-0" />
-                  <span>{activePOI.address}</span>
-                </div>
-              )}
-
+            {/* ... (Tags de tipo, telefone, site existentes) ... */}
+            <div className="space-y-2 text-sm text-gray-600 mb-4">
+              {/* Mantenha os detalhes existentes aqui (Phone, Website, etc) */}
               {activePOI.phone && (
                 <div className="flex items-center gap-2">
                   <Phone className="h-4 w-4 text-gray-400 shrink-0" />
                   <span>{activePOI.phone}</span>
                 </div>
               )}
+            </div>
 
-              {activePOI.website && (
-                <div className="flex items-center gap-2">
-                  <Globe className="h-4 w-4 text-gray-400 shrink-0" />
-                  <a
-                    href={activePOI.website}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-600 hover:underline truncate block max-w-[200px]"
-                  >
-                    Visitar site
-                  </a>
+            {/* SEÇÃO DE AVALIAÇÕES */}
+            <div className="border-t border-gray-100 pt-3">
+              <h4 className="font-semibold text-gray-800 mb-2 text-sm flex justify-between items-center">
+                Avaliações da Comunidade
+                <span className="text-xs font-normal text-gray-500">
+                  {reviews.length} opiniões
+                </span>
+              </h4>
+
+              {loadingReviews ? (
+                <div className="text-center py-2 text-xs text-gray-400">
+                  Carregando...
                 </div>
+              ) : reviews.length > 0 ? (
+                <div className="space-y-3 max-h-40 overflow-y-auto pr-1 scrollbar-thin">
+                  {reviews.map((review: any) => (
+                    <div
+                      key={review.id}
+                      className="bg-gray-50 p-2 rounded-lg text-sm"
+                    >
+                      <div className="flex justify-between items-center mb-1">
+                        <span className="font-bold text-xs text-orange-600">
+                          {review.nomeUsuario}
+                        </span>
+                        <StarRating rating={review.nota} size={12} />
+                      </div>
+                      <p className="text-gray-700 text-xs italic">
+                        "{review.comentario}"
+                      </p>
+                      {review.fotoUrl && (
+                        <img
+                          src={review.fotoUrl}
+                          alt="Foto da avaliação"
+                          className="mt-2 w-full h-24 object-cover rounded-md"
+                        />
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-xs text-gray-400 italic text-center py-2">
+                  Nenhuma avaliação ainda. Seja o primeiro!
+                </p>
               )}
             </div>
 
-            <div className="mt-4 pt-3 border-t border-gray-100 text-xs text-gray-400 italic">
+            <div className="mt-2 pt-2 border-t border-gray-100 text-xs text-gray-400 italic">
               Clique no mapa para fechar
             </div>
           </div>

@@ -29,8 +29,8 @@ public class UsuarioMapper {
 
         return new RegisterResponse(
                 usuario.getId(),
-                usuario.getUsername(),
                 usuario.getEmail(),
+                usuario.getUsername(),
                 usuario.getPassword(),
                 usuario.getRole()
             );

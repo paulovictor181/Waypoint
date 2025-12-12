@@ -1,3 +1,4 @@
+// waypoint-front/components/rightNavBar.tsx
 "use client";
 
 import { useAuth } from "@/context/AuthContext";
@@ -12,10 +13,11 @@ import { usePathname } from "next/navigation";
 import Logo from "./ui/logo";
 import NavBarBtn from "./ui/navBarBtn";
 
+// Estrutura do item de navegação com a propriedade 'roles'
 const NAV_ITEMS = [
-  { label: "Início", icon: faHome, href: "/dashboard" },
-  { label: "Usuários", icon: faUsers, href: "/users" },
-  { label: "Itinerários", icon: faSuitcase, href: "/itinerary" },
+  { label: "Início", icon: faHome, href: "/dashboard", roles: ["USER", "ROLE_ADMIN"] }, // Acessível por todos
+  { label: "Usuários", icon: faUsers, href: "/users", roles: ["ROLE_ADMIN"] }, // Apenas ADMIN
+  { label: "Itinerários", icon: faSuitcase, href: "/itinerary", roles: ["USER", "ROLE_ADMIN"] }, // Acessível por todos
 ];
 
 const BOTTOM_ITEMS = [
@@ -25,14 +27,21 @@ const BOTTOM_ITEMS = [
 
 function RightNavBar() {
   const pathname = usePathname();
-  const { logout } = useAuth();
+  
+  const { logout, userRole } = useAuth(); 
+
+  // Filtra itens de navegação baseados na role do usuário
+  const filteredNavItems = NAV_ITEMS.filter(item => 
+    userRole && item.roles.includes(userRole)
+  );
 
   return (
     <nav className="flex flex-col justify-between w-96 h-screen border-r-2 border-slate-400 p-4 bg-white">
       {/* Main Navigation */}
       <div className="flex flex-col">
         <Logo />
-        {NAV_ITEMS.map((item) => (
+        {/* Usando a lista filtrada */}
+        {filteredNavItems.map((item) => (
           <NavBarBtn
             key={item.href}
             label={item.label}

@@ -17,11 +17,19 @@ interface LoginData {
   password?: string;
 }
 
+interface UserProfile {
+    id: number;
+    username: string;
+    email: string;
+    role: string;
+}
+
 interface AuthContextType {
   isAuthenticated: boolean;
   login: (data: LoginData) => Promise<void>;
   logout: () => void;
   loading: boolean;
+  userRole: string | null; 
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -29,36 +37,56 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [userRole, setUserRole] = useState<string | null>(null);
   const router = useRouter();
 
+  // Função para buscar a role do usuário logado
+  const fetchUserProfile = async () => {
+    try {
+        const response = await api.get<UserProfile>("/users/me");
+        setUserRole(response.data.role);
+        setIsAuthenticated(true);
+    } catch (e) {
+        console.error("Falha ao buscar perfil do usuário.", e);
+        // Se a busca falhar, limpa o token (possivelmente expirado/inválido)
+        localStorage.removeItem("waypoint.token");
+        localStorage.removeItem("waypoint.refreshToken");
+        setIsAuthenticated(false);
+        setUserRole(null);
+    } finally {
+        setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    // Verifica token ao carregar a aplicação
     const token = localStorage.getItem("waypoint.token");
     if (token) {
-      setIsAuthenticated(true);
+        // Se o token existir, tentamos carregar o perfil para obter a role
+        fetchUserProfile();
+    } else {
+        setLoading(false);
     }
-    setLoading(false);
   }, []);
 
   const login = async ({ username, password }: LoginData) => {
     try {
-      // POST para /auth/login (somado à baseURL /api fica /api/auth/login)
       const response = await api.post("/auth/login", {
         username,
         password,
       });
 
-      // Extrai tokens da resposta (TokenDTO)
       const { tokenAcess, refreshToken } = response.data;
 
       localStorage.setItem("waypoint.token", tokenAcess);
       localStorage.setItem("waypoint.refreshToken", refreshToken);
 
-      setIsAuthenticated(true);
-      router.push("/dashboard"); // Redireciona após sucesso
+      await fetchUserProfile(); 
+      // O fetchUserProfile define isAuthenticated para true
+
+      router.push("/dashboard"); 
     } catch (error) {
       console.error("Erro no login:", error);
-      throw error; // Lança o erro para a página exibir feedback visual
+      throw error; 
     }
   };
 
@@ -66,11 +94,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     localStorage.removeItem("waypoint.token");
     localStorage.removeItem("waypoint.refreshToken");
     setIsAuthenticated(false);
+    setUserRole(null); // Limpa a role
     router.push("/login");
   };
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, login, logout, loading }}>
+    <AuthContext.Provider value={{ isAuthenticated, login, logout, loading, userRole }}>
       {children}
     </AuthContext.Provider>
   );

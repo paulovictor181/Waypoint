@@ -37,7 +37,8 @@ public class Usuario implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of(new SimpleGrantedAuthority("ROLE_USER"));
+        // Agora retorna a role real do usuário, o que é crucial para ROLE_ADMIN/ROLE_PREMIUM
+        return List.of(new SimpleGrantedAuthority(this.role)); 
     }
 
     @Override

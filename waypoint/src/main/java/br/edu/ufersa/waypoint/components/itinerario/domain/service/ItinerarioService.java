@@ -6,14 +6,17 @@ import br.edu.ufersa.waypoint.components.custo.api.dtos.CustoRequest;
 import br.edu.ufersa.waypoint.components.custo.domain.entities.Custo;
 import br.edu.ufersa.waypoint.components.custo.domain.repository.CustoRepository;
 import br.edu.ufersa.waypoint.components.dia.api.dtos.DiaRequest;
+import br.edu.ufersa.waypoint.components.dia.api.dtos.DiaResponse;
 import br.edu.ufersa.waypoint.components.dia.domain.entities.Dia;
 import br.edu.ufersa.waypoint.components.dia.domain.repository.DiaRepository;
+import br.edu.ufersa.waypoint.components.itinerario.api.dtos.ItinerarioDetalhadoDTO;
 import br.edu.ufersa.waypoint.components.itinerario.api.dtos.ItinerarioRequest;
 import br.edu.ufersa.waypoint.components.itinerario.api.dtos.ItinerarioResumoDTO;
 import br.edu.ufersa.waypoint.components.itinerario.api.dtos.ItinerarioUpdateRequest;
 import br.edu.ufersa.waypoint.components.itinerario.domain.entities.Itinerario;
 import br.edu.ufersa.waypoint.components.itinerario.domain.repository.ItinerarioRepository;
 import br.edu.ufersa.waypoint.components.local.api.dtos.LocalRequest;
+import br.edu.ufersa.waypoint.components.local.api.dtos.LocalResponse;
 import br.edu.ufersa.waypoint.components.local.domain.entities.Local;
 import br.edu.ufersa.waypoint.components.local.domain.repository.LocalRepository;
 import br.edu.ufersa.waypoint.components.usuario.domain.entities.Usuario;
@@ -50,6 +53,18 @@ public class ItinerarioService {
         }
         return toDTO(it);
     }
+
+    public ItinerarioDetalhadoDTO buscarPorIdDetalhado(Long id, Usuario usuario) {
+        Itinerario it = itinerarioRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Itinerário não encontrado"));
+
+        if(!it.getUsuario().getId().equals(usuario.getId())) {
+            throw new RuntimeException("Acesso negado");
+        }
+
+        return toDetalhadoDTO(it);
+    }
+
 
     @Transactional
     public ItinerarioResumoDTO criar(ItinerarioRequest request, Usuario usuario) {
@@ -166,6 +181,40 @@ public class ItinerarioService {
                 it.getCidade() != null ? it.getCidade().getNome() : null,
                 it.getCidade() != null ? it.getCidade().getLatitude() : null,
                 it.getCidade() != null ? it.getCidade().getLongitude() : null
+        );
+    }
+
+    private ItinerarioDetalhadoDTO toDetalhadoDTO(Itinerario it) {
+        List<DiaResponse> diasResp = it.getDias().stream().map(dia -> {
+
+            List<LocalResponse> locaisResp = dia.getLocais().stream().map(local -> {
+
+                List<Custo> custos = custoRepository.findByDiaIdAndLocalId(dia.getId(), local.getId());
+
+                return new LocalResponse(
+                        local.getId(),
+                        local.getOsmId(),
+                        local.getName(),
+                        local.getLatitude(),
+                        local.getLongitude(),
+                        0,
+                        custos
+                );
+            }).toList();
+
+            return new DiaResponse(dia.getNumero(), locaisResp);
+        }).toList();
+
+        return new ItinerarioDetalhadoDTO(
+                it.getId(),
+                it.getName(),
+                it.getInicio(),
+                it.getFim(),
+                it.getTotalOrcamento(),
+                it.getCidade() != null ? it.getCidade().getNome() : null,
+                it.getCidade() != null ? it.getCidade().getLatitude() : null,
+                it.getCidade() != null ? it.getCidade().getLongitude() : null,
+                diasResp
         );
     }
 }

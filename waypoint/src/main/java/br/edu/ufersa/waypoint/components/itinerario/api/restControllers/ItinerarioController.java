@@ -1,9 +1,6 @@
 package br.edu.ufersa.waypoint.components.itinerario.api.restControllers;
 
-import br.edu.ufersa.waypoint.components.itinerario.api.dtos.ItinerarioRequest;
-import br.edu.ufersa.waypoint.components.itinerario.api.dtos.ItinerarioResumoDTO;
-import br.edu.ufersa.waypoint.components.itinerario.api.dtos.ItinerarioUpdateRequest;
-import br.edu.ufersa.waypoint.components.itinerario.api.dtos.ItinerarioUpdateResponse;
+import br.edu.ufersa.waypoint.components.itinerario.api.dtos.*;
 import br.edu.ufersa.waypoint.components.itinerario.domain.service.ItinerarioService;
 import br.edu.ufersa.waypoint.components.usuario.domain.entities.Usuario;
 import jakarta.validation.Valid;
@@ -27,8 +24,8 @@ public class ItinerarioController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ItinerarioResumoDTO> buscarPorId(@PathVariable Long id, @AuthenticationPrincipal Usuario usuario) {
-        return ResponseEntity.ok(itinerarioService.buscarPorId(id, usuario));
+    public ResponseEntity<ItinerarioDetalhadoDTO> buscarPorId(@PathVariable Long id, @AuthenticationPrincipal Usuario usuario) {
+        return ResponseEntity.ok(itinerarioService.buscarPorIdDetalhado(id, usuario));
     }
 
     @PostMapping

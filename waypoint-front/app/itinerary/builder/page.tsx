@@ -56,6 +56,7 @@ export default function ItineraryPage() {
   const [tempLocation, setTempLocation] = useState<{
     lat: number;
     lng: number;
+    osmId?: number;
   } | null>(null);
   const [tempLocationName, setTempLocationName] = useState("");
 
@@ -76,8 +77,8 @@ export default function ItineraryPage() {
     try {
       const payload = {
         name: nomeItinerario,
-        inicio: itineraryData.inicio,
-        fim: itineraryData.fim,
+        inicio: itineraryData.dataInicio,
+        fim: itineraryData.dataFim,
         totalOrcamento: parseFloat(orcamentoTotal.toString()),
         dias: dias.map((dia) => ({
           Numeracao: dia.dia,
@@ -100,7 +101,7 @@ export default function ItineraryPage() {
 
       alert("Itinerário salvo com sucesso!");
 
-      await fetchItinerary();
+      router.push("/itinerary");
     } catch (error) {
       console.error("Erro ao salvar itinerário:", error);
       alert("Erro ao salvar. Verifique o console.");
@@ -185,6 +186,11 @@ export default function ItineraryPage() {
         `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`
       );
       const data = await resp.json();
+
+      const osmId = data.osm_id ? parseInt(data.osm_id) : -Date.now();
+
+      setTempLocation({ lat, lng, osmId });
+
       setTempLocationName(
         data.display_name
           ? data.display_name.split(",")[0]
@@ -196,7 +202,7 @@ export default function ItineraryPage() {
   };
 
   const selectPOI = (poi: POI) => {
-    setTempLocation({ lat: poi.lat, lng: poi.lng });
+    setTempLocation({ lat: poi.lat, lng: poi.lng, osmId: poi.id });
     setTempLocationName(poi.name);
   };
 
@@ -225,7 +231,7 @@ export default function ItineraryPage() {
       lng: tempLocation.lng,
       custos: [],
       id: 0,
-      osmId: 0,
+      osmId: tempLocation.osmId || -Date.now(),
       dia: 0,
     });
     const newDias = [...dias];

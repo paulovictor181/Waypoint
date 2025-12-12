@@ -9,12 +9,11 @@ import java.util.List;
 public record ItinerarioDetalhadoDTO(
         Long id,
         String name,
-        LocalDate inicio,
-        LocalDate fim,
+        LocalDate dataInicio,
+        LocalDate dataFim,
         BigDecimal totalOrcamento,
-        String s,
-        Double aDouble,
-        Double aDouble1,
-        List<DiaResponse> diasDTO) {
-
-}
+        String cidadeNome,
+        Double cidadeLat,
+        Double cidadeLon,
+        List<DiaResponse> dias
+) {}

@@ -12,17 +12,18 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
 
+  const isPublicRoute =
+    publicRoutes.includes(pathname) ||
+    pathname.startsWith("/itinerary/view/") ||
+    pathname.startsWith("/search");
+
   useEffect(() => {
     if (!loading) {
-      const isPublicRoute =
-        publicRoutes.includes(pathname) ||
-        pathname.startsWith("/itinerary/view/");
-
       if (!isPublicRoute && !isAuthenticated) {
         router.push("/login");
       }
     }
-  }, [isAuthenticated, loading, pathname, router]);
+  }, [isAuthenticated, loading, isPublicRoute, router]);
 
   if (loading) {
     return (
@@ -32,8 +33,6 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
     );
   }
 
-  const isPublicRoute =
-    publicRoutes.includes(pathname) || pathname.startsWith("/itinerary/view/");
   if (!isPublicRoute && !isAuthenticated) {
     return null;
   }

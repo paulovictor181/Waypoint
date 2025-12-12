@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import api from "@/lib/api";
 import { fetchPOIsInBounds, getRoute, POI } from "@/lib/osm";
+import { addDays, differenceInCalendarDays, format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import { MapPin, Plus, Trash2 } from "lucide-react";
 import dynamic from "next/dynamic";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -19,7 +21,6 @@ const ItineraryMap = dynamic(() => import("@/components/ItineraryMap"), {
   ),
 });
 
-// ... (Tipos Custo, Local, DiaItinerario mantidos iguais) ...
 type Custo = {
   description: string;
   amount: number;
@@ -34,6 +35,7 @@ type Local = {
 
 type DiaItinerario = {
   dia: number;
+  displayDate: string; // Ex: "12/12"
   locais: Local[];
 };
 
@@ -42,7 +44,10 @@ export default function ItineraryPage() {
   const searchParams = useSearchParams();
 
   const [nomeItinerario, setNomeItinerario] = useState("");
-  const [dias, setDias] = useState<DiaItinerario[]>([{ dia: 1, locais: [] }]);
+  const [orcamentoTotal, setOrcamentoTotal] = useState<number | string>("");
+  const [dias, setDias] = useState<DiaItinerario[]>([
+    { dia: 1, displayDate: "", locais: [] },
+  ]);
   const [selectedDayIndex, setSelectedDayIndex] = useState(0);
   const [tempLocation, setTempLocation] = useState<{
     lat: number;
@@ -56,10 +61,11 @@ export default function ItineraryPage() {
   const itineraryId = searchParams.get("id");
   const [itineraryData, setItineraryData] = useState<any>(null);
 
-  // Referência para o timer do debounce
   const debounceTimer = useRef<NodeJS.Timeout | null>(null);
+  const [mapCenter, setMapCenter] = useState<[number, number]>([
+    -5.187978, -37.344265,
+  ]);
 
-  // Efeito para carregar dados do Backend se tiver ID
   useEffect(() => {
     if (itineraryId) {
       api
@@ -67,18 +73,30 @@ export default function ItineraryPage() {
         .then((response) => {
           const data = response.data;
           setItineraryData(data);
-          // Recalcula os dias com base nas datas vindas do banco
-          if (data.startDate && data.endDate) {
-            const start = new Date(data.startDate);
-            const end = new Date(data.endDate);
-            const diffTime = Math.abs(end.getTime() - start.getTime());
-            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
-            setDias(
-              Array.from({ length: diffDays }, (_, i) => ({
+
+          setNomeItinerario(data.name || "");
+          setOrcamentoTotal(data.totalOrcamento || 0);
+
+          if (data.cidadeLat && data.cidadeLon) {
+            setMapCenter([data.cidadeLat, data.cidadeLon]);
+          }
+
+          if (data.dataInicio && data.dataFim) {
+            const start = new Date(data.dataInicio + "T00:00:00");
+            const end = new Date(data.dataFim + "T00:00:00");
+
+            const diffDays = differenceInCalendarDays(end, start) + 1;
+
+            const diasGerados = Array.from({ length: diffDays }, (_, i) => {
+              const currentDate = addDays(start, i);
+              return {
                 dia: i + 1,
+                displayDate: format(currentDate, "dd/MM", { locale: ptBR }),
                 locais: [],
-              }))
-            );
+              };
+            });
+
+            setDias(diasGerados);
           }
         })
         .catch((err) => console.error("Erro ao carregar itinerário", err));
@@ -87,12 +105,10 @@ export default function ItineraryPage() {
 
   const displayName = itineraryData?.name || "Novo Itinerário";
 
-  // EFEITO: Sempre que os locais do dia mudam, recalcula a rota
   useEffect(() => {
     const locaisDoDia = dias[selectedDayIndex].locais;
 
     if (locaisDoDia.length > 1) {
-      // Pega só lat/lng dos locais já salvos
       const points = locaisDoDia.map((l) => ({ lat: l.lat, lng: l.lng }));
 
       getRoute(points).then((path) => {
@@ -103,7 +119,6 @@ export default function ItineraryPage() {
     }
   }, [dias, selectedDayIndex]);
 
-  // FUNÇÃO ATUALIZADA COM DEBOUNCE
   const handleMapMove = (bounds: any) => {
     if (debounceTimer.current) clearTimeout(debounceTimer.current);
 
@@ -117,7 +132,7 @@ export default function ItineraryPage() {
       const pois = await fetchPOIsInBounds(north, south, east, west, 100);
       setSuggestedPOIs(pois);
       setIsLoadingPOIs(false);
-    }, 1000); // Espera 1 segundo após parar de mover
+    }, 1000);
   };
 
   const handleMapClick = async (lat: number, lng: number) => {
@@ -145,7 +160,19 @@ export default function ItineraryPage() {
   };
 
   const addDay = () => {
-    setDias([...dias, { dia: dias.length + 1, locais: [] }]);
+    const lastDay = dias[dias.length - 1];
+    let nextDateLabel = "Dia " + (dias.length + 1);
+
+    if (itineraryData?.dataInicio) {
+      const start = new Date(itineraryData.dataInicio + "T00:00:00");
+      const nextDate = addDays(start, dias.length);
+      nextDateLabel = format(nextDate, "dd/MM", { locale: ptBR });
+    }
+
+    setDias([
+      ...dias,
+      { dia: dias.length + 1, displayDate: nextDateLabel, locais: [] },
+    ]);
   };
 
   const addLocationToDay = () => {
@@ -162,6 +189,19 @@ export default function ItineraryPage() {
     setDias(newDias);
     setTempLocation(null);
     setTempLocationName("");
+  };
+
+  const removeLocation = (dayIndex: number, locIndex: number) => {
+    setDias((prevDias) => {
+      const newDias = [...prevDias];
+      const diaAtualizado = { ...newDias[dayIndex] };
+      diaAtualizado.locais = diaAtualizado.locais.filter(
+        (_, i) => i !== locIndex
+      );
+
+      newDias[dayIndex] = diaAtualizado;
+      return newDias;
+    });
   };
 
   const addCostToLocation = (dayIndex: number, locationIndex: number) => {
@@ -204,9 +244,12 @@ export default function ItineraryPage() {
     }, 0);
   }, [dias]);
 
-  const mapMarkers = dias.flatMap((d) =>
-    d.locais.map((l) => ({ lat: l.lat, lng: l.lng, name: l.name }))
-  );
+  const mapMarkers =
+    dias[selectedDayIndex]?.locais.map((l) => ({
+      lat: l.lat,
+      lng: l.lng,
+      name: l.name,
+    })) || [];
 
   return (
     <div className="flex h-screen w-full bg-white text-gray-900">
@@ -240,20 +283,20 @@ export default function ItineraryPage() {
               <button
                 key={d.dia}
                 onClick={() => setSelectedDayIndex(index)}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors whitespace-nowrap ${
+                className={`px-4 py-2 rounded-full text-sm font-bold transition-colors whitespace-nowrap ${
                   selectedDayIndex === index
-                    ? "bg-orange-500 text-white"
+                    ? "bg-orange-500 text-white shadow-md"
                     : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                 }`}
               >
-                Dia {d.dia}
+                {d.displayDate || `Dia ${d.dia}`}
               </button>
             ))}
             <Button
               variant="outline"
               size="sm"
               onClick={addDay}
-              className="rounded-full shrink-0"
+              className="rounded-full shrink-0 aspect-square p-0 w-9 h-9 flex items-center justify-center border-dashed border-gray-400 text-gray-500 hover:text-orange-600 hover:border-orange-500"
             >
               <Plus className="h-4 w-4" />
             </Button>
@@ -262,7 +305,7 @@ export default function ItineraryPage() {
           <div className="bg-orange-50 p-4 rounded-lg mb-6 border border-orange-100">
             <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
               <MapPin className="h-4 w-4 text-orange-500" />
-              Adicionar local ao Dia {selectedDayIndex + 1}
+              Adicionar ao dia {dias[selectedDayIndex]?.displayDate}{" "}
             </h3>
             <p className="text-xs text-gray-500 mb-3">
               Clique no mapa para selecionar as coordenadas.
@@ -296,6 +339,7 @@ export default function ItineraryPage() {
                   <Button
                     variant="ghost"
                     size="icon"
+                    onClick={() => removeLocation(selectedDayIndex, locIndex)}
                     className="text-red-500 hover:text-red-700 hover:bg-red-50"
                   >
                     <Trash2 className="h-4 w-4" />
@@ -360,6 +404,7 @@ export default function ItineraryPage() {
         {/* Lado Direito: Mapa */}
         <div className="w-1/2 h-full bg-gray-100 relative">
           <ItineraryMap
+            center={mapCenter}
             markers={mapMarkers}
             onMapClick={handleMapClick}
             selectedPosition={tempLocation}

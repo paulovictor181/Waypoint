@@ -73,7 +73,10 @@ public class ItinerarioService {
                 it.getName(),
                 it.getInicio(),
                 it.getFim(),
-                it.getTotalOrcamento()
+                it.getTotalOrcamento(),
+                it.getCidade() != null ? it.getCidade().getNome() : null,
+                it.getCidade() != null ? it.getCidade().getLatitude() : null,
+                it.getCidade() != null ? it.getCidade().getLongitude() : null
         );
     }
 }

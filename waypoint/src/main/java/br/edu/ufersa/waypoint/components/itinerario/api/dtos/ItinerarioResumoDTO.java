@@ -8,5 +8,8 @@ public record ItinerarioResumoDTO(
         String name,
         LocalDate dataInicio,
         LocalDate dataFim,
-        BigDecimal totalOrcamento
+        BigDecimal totalOrcamento,
+        String cidadeNome,
+        Double cidadeLat,
+        Double cidadeLon
 ) {}

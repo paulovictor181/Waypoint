@@ -4,47 +4,92 @@ import { DatePickerWithRange } from "@/components/DatePickerWithRange";
 import { RightNavBar } from "@/components/rightNavBar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import api from "@/lib/api"; // Axios configurado
-import { ArrowLeft, Loader2, Plane } from "lucide-react";
+import api from "@/lib/api";
+import { ArrowLeft, Loader2, MapPin, Plane } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { DateRange } from "react-day-picker";
 
 export default function NewItineraryPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
 
-  // Estado do formulário
   const [nome, setNome] = useState("");
-  const [destino, setDestino] = useState(""); // Novo campo
-  const [orcamento, setOrcamento] = useState(""); // Novo campo
+  const [orcamento, setOrcamento] = useState("");
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
 
+  const [cityQuery, setCityQuery] = useState("");
+  const [citySuggestions, setCitySuggestions] = useState<any[]>([]);
+  const [selectedCity, setSelectedCity] = useState<any | null>(null);
+
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(async () => {
+      if (cityQuery.length > 2 && !selectedCity) {
+        try {
+          const res = await fetch(
+            `https://nominatim.openstreetmap.org/search?format=json&q=${cityQuery}&addressdetails=1&limit=5`
+          );
+          const data = await res.json();
+          setCitySuggestions(data);
+        } catch (error) {
+          console.error("Erro ao buscar cidades", error);
+        }
+      } else {
+        setCitySuggestions([]);
+      }
+    }, 500); // Debounce de 500ms
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [cityQuery, selectedCity]);
+
+  const handleSelectCity = (city: any) => {
+    setSelectedCity(city);
+    setCityQuery(city.display_name);
+    setCitySuggestions([]);
+  };
+
   const handleCreate = async () => {
-    if (!nome || !destino || !orcamento || !dateRange?.from || !dateRange?.to) {
-      alert("Por favor, preencha todos os campos.");
+    if (
+      !nome ||
+      !selectedCity ||
+      !orcamento ||
+      !dateRange?.from ||
+      !dateRange?.to
+    ) {
+      alert(
+        "Por favor, preencha todos os campos e selecione uma cidade válida."
+      );
       return;
     }
 
     setLoading(true);
 
     try {
-      // 1. Envia para o Backend
-      const response = await api.post("/itinerarios", {
+      const payload = {
         name: nome,
-        destino: destino,
-        inicio: dateRange.from.toISOString().split("T")[0], // YYYY-MM-DD
+        inicio: dateRange.from.toISOString().split("T")[0],
         fim: dateRange.to.toISOString().split("T")[0],
         totalOrcamento: parseFloat(orcamento),
-      });
 
+        cidadeOsmId: parseInt(selectedCity.osm_id),
+        cidadeNome:
+          selectedCity.address.city ||
+          selectedCity.address.town ||
+          selectedCity.address.village ||
+          selectedCity.name,
+        cidadeEstado: selectedCity.address.state || "",
+        cidadePais: selectedCity.address.country || "",
+        cidadeLat: parseFloat(selectedCity.lat),
+        cidadeLon: parseFloat(selectedCity.lon),
+      };
+
+      const response = await api.post("/itinerarios", payload);
       const novoItinerario = response.data;
 
-      // 2. Redireciona para o Builder passando o ID
       router.push(`/itinerary/builder?id=${novoItinerario.id}`);
     } catch (error) {
       console.error("Erro ao criar itinerário:", error);
-      alert("Erro ao criar itinerário. Tente novamente.");
+      alert("Erro ao criar itinerário. Verifique os dados.");
     } finally {
       setLoading(false);
     }
@@ -59,7 +104,7 @@ export default function NewItineraryPage() {
           <Button
             variant="ghost"
             onClick={() => router.back()}
-            className="mb-6 text-gray-500 hover:text-gray-900 -ml-4"
+            className="mb-6 -ml-4"
           >
             <ArrowLeft className="mr-2 h-4 w-4" /> Voltar
           </Button>
@@ -73,9 +118,7 @@ export default function NewItineraryPage() {
                 <h1 className="text-3xl font-bold text-gray-900">
                   Nova Viagem
                 </h1>
-                <p className="text-gray-500">
-                  Defina os detalhes iniciais do seu roteiro.
-                </p>
+                <p className="text-gray-500">Defina o destino e data.</p>
               </div>
             </div>
 
@@ -91,15 +134,39 @@ export default function NewItineraryPage() {
                     onChange={(e) => setNome(e.target.value)}
                   />
                 </div>
-                <div className="space-y-2">
+
+                {/* Input de Cidade com Autosuggest */}
+                <div className="space-y-2 relative">
                   <label className="text-sm font-semibold text-gray-700">
                     Destino Principal
                   </label>
-                  <Input
-                    placeholder="Ex: Paris, França"
-                    value={destino}
-                    onChange={(e) => setDestino(e.target.value)}
-                  />
+                  <div className="relative">
+                    <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <Input
+                      placeholder="Busque uma cidade..."
+                      value={cityQuery}
+                      onChange={(e) => {
+                        setCityQuery(e.target.value);
+                        setSelectedCity(null); // Reseta se o usuário editar
+                      }}
+                      className="pl-10"
+                    />
+                  </div>
+
+                  {/* Lista de Sugestões */}
+                  {citySuggestions.length > 0 && (
+                    <ul className="absolute z-50 w-full bg-white border border-gray-200 rounded-md shadow-lg mt-1 max-h-60 overflow-auto">
+                      {citySuggestions.map((city) => (
+                        <li
+                          key={city.place_id}
+                          className="px-4 py-2 hover:bg-orange-50 cursor-pointer text-sm text-gray-700 border-b border-gray-50 last:border-0"
+                          onClick={() => handleSelectCity(city)}
+                        >
+                          {city.display_name}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                 </div>
               </div>
 
@@ -131,7 +198,7 @@ export default function NewItineraryPage() {
               <Button
                 onClick={handleCreate}
                 disabled={loading}
-                className="bg-orange-500 hover:bg-orange-600 text-white font-bold h-12 px-8 rounded-xl text-lg shadow-lg"
+                className="bg-orange-500 hover:bg-orange-600 text-white font-bold h-12 px-8 rounded-xl"
               >
                 {loading ? (
                   <Loader2 className="animate-spin mr-2" />

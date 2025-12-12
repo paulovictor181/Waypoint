@@ -49,13 +49,12 @@ const createCustomIcon = (
   });
 };
 
-// Ícone Padrão (Azul - Para locais salvos)
+// Ícones pré-definidos
 const savedIcon = createCustomIcon(
   <MapPin className="w-5 h-5" />,
   "bg-orange-600"
 );
 
-// Ícone Temporário (Laranja - Seleção atual)
 const tempIcon = createCustomIcon(
   <MapPin className="w-5 h-5" />,
   "bg-blue-500"
@@ -91,6 +90,19 @@ const getPoiIcon = (type: string) => {
   return createCustomIcon(icon, color);
 };
 
+// --- COMPONENTE AUXILIAR PARA RECENTRALIZAR ---
+function RecenterAutomatically({ lat, lng }: { lat: number; lng: number }) {
+  const map = useMap();
+  useEffect(() => {
+    // Só atualiza se as coordenadas forem válidas
+    if (lat !== undefined && lng !== undefined) {
+      map.setView([lat, lng]);
+    }
+  }, [lat, lng, map]);
+  return null;
+}
+
+// --- HANDLER DE EVENTOS DO MAPA ---
 function MapEventsHandler({
   onLocationSelect,
   onBoundsChange,
@@ -140,6 +152,7 @@ interface ItineraryMapProps {
   onBoundsChange?: (bounds: any) => void;
   selectedPosition: { lat: number; lng: number } | null;
   routeCoordinates?: [number, number][];
+  center?: [number, number];
 }
 
 export default function ItineraryMap({
@@ -150,17 +163,21 @@ export default function ItineraryMap({
   onBoundsChange,
   selectedPosition,
   routeCoordinates = [],
+  center = [-5.187978, -37.344265], // Padrão
 }: ItineraryMapProps) {
   const [activePOI, setActivePOI] = useState<any>(null);
 
   return (
     <div className="relative w-full h-full">
       <MapContainer
-        center={[-5.187978, -37.344265]}
+        center={center}
         zoom={13}
         className="h-full w-full z-0"
         zoomControl={false}
       >
+        {/* Componente que força a atualização do centro quando a prop muda */}
+        <RecenterAutomatically lat={center[0]} lng={center[1]} />
+
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
           url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
@@ -184,13 +201,14 @@ export default function ItineraryMap({
           onMapClickEmpty={() => setActivePOI(null)}
         />
 
-        {/* 1. Sugestões (Renderizadas PRIMEIRO = Ficam por BAIXO) */}
+        {/* 1. Sugestões */}
         {suggestedMarkers.map((poi, idx) => (
           <Marker
-            key={`poi-${idx}`}
+            // FIX: Usar uma chave única baseada na posição evita o erro _leaflet_pos
+            key={`poi-${poi.lat}-${poi.lng}-${idx}`}
             position={[poi.lat, poi.lng]}
             icon={getPoiIcon(poi.type)}
-            zIndexOffset={0} // Prioridade Baixa
+            zIndexOffset={0}
             eventHandlers={{
               click: (e) => {
                 L.DomEvent.stopPropagation(e);
@@ -205,13 +223,14 @@ export default function ItineraryMap({
           </Marker>
         ))}
 
-        {/* 2. Marcadores Salvos (Renderizados DEPOIS = Ficam por CIMA) */}
+        {/* 2. Marcadores Salvos */}
         {markers.map((marker, idx) => (
           <Marker
-            key={idx}
+            // FIX: Chave única combinando lat/lng para garantir recriação correta
+            key={`marker-${marker.lat}-${marker.lng}-${idx}`}
             position={[marker.lat, marker.lng]}
             icon={savedIcon}
-            zIndexOffset={500} // Prioridade Média
+            zIndexOffset={500}
           >
             <Popup>
               <span className="font-bold text-gray-800">{marker.name}</span>
@@ -219,20 +238,20 @@ export default function ItineraryMap({
           </Marker>
         ))}
 
-        {/* 3. Marcador Selecionado (Renderizado POR ÚLTIMO = TOPO ABSOLUTO) */}
+        {/* 3. Marcador Selecionado */}
         {selectedPosition && (
           <Marker
             position={[selectedPosition.lat, selectedPosition.lng]}
             opacity={0.9}
             icon={tempIcon}
-            zIndexOffset={1000} // Prioridade Máxima
+            zIndexOffset={1000}
           >
             <Popup>Novo local selecionado</Popup>
           </Marker>
         )}
       </MapContainer>
 
-      {/* CARD DE DETALHES */}
+      {/* CARD DE DETALHES (Mantido igual) */}
       {activePOI && (
         <div className="absolute bottom-6 left-6 z-[500] w-80 bg-white rounded-xl shadow-2xl border-l-4 border-orange-500 overflow-hidden animate-in slide-in-from-bottom-4 fade-in duration-300">
           <div className="p-4 relative">

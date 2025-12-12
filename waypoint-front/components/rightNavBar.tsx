@@ -15,9 +15,9 @@ import NavBarBtn from "./ui/navBarBtn";
 
 // Estrutura do item de navegação com a propriedade 'roles'
 const NAV_ITEMS = [
-  { label: "Início", icon: faHome, href: "/dashboard", roles: ["USER", "ROLE_ADMIN"] }, // Acessível por todos
+  { label: "Início", icon: faHome, href: "/dashboard", roles: ["ROLE_USER", "ROLE_ADMIN", "ROLE_PREMIUM"] }, 
   { label: "Usuários", icon: faUsers, href: "/users", roles: ["ROLE_ADMIN"] }, // Apenas ADMIN
-  { label: "Itinerários", icon: faSuitcase, href: "/itinerary", roles: ["USER", "ROLE_ADMIN"] }, // Acessível por todos
+  { label: "Itinerários", icon: faSuitcase, href: "/itinerary", roles: ["ROLE_USER", "ROLE_ADMIN", "ROLE_PREMIUM"] },
 ];
 
 const BOTTOM_ITEMS = [

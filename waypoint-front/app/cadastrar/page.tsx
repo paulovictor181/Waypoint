@@ -42,7 +42,7 @@ export default function RegisterPage() {
         password,
         email,
         birthDate,
-        role: "USER",
+        role: "ROLE_USER",
       });
 
       router.push("/login");

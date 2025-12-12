@@ -29,6 +29,20 @@ public class UsuarioService {
     }
 
     @Transactional
+    public Usuario upgradeToPremium(Usuario usuario) {
+        if (usuario.getRole().equals("ROLE_ADMIN")) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Administradores não precisam de upgrade.");
+        }
+        if (usuario.getRole().equals("ROLE_PREMIUM")) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Usuário já está no plano Premium.");
+        }
+        
+        // Altera a role do usuário
+        usuario.setRole("ROLE_PREMIUM");
+        return usuarioRepository.save(usuario);
+    }
+
+    @Transactional
     public Usuario register(RegisterRequest registerRequest) {
         if (usuarioRepository.findByUsername(registerRequest.username()).isPresent()) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Nome de usuário já existe.");

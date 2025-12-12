@@ -77,9 +77,16 @@ public class ItinerarioService {
         return toDetalhadoDTO(it);
     }
 
-
-    @Transactional
+@Transactional
     public ItinerarioResumoDTO criar(ItinerarioRequest request, Usuario usuario) {
+
+        // Usuários com ROLE_ADMIN ou ROLE_PREMIUM (ou qualquer outra role) terão acesso irrestrito.
+        if (usuario.getRole().equals("ROLE_USER")) {
+            long count = itinerarioRepository.findByUsuarioId(usuario.getId()).size();
+            if (count >= 1) {
+                throw new RuntimeException("Limite de um itinerário atingido para usuários comuns. Atualize para o Premium.");
+            }
+        }
 
         Cidade cidade =
                 cidadeRepository.findByOsmId(request.cidadeOsmId())

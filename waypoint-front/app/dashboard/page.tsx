@@ -4,11 +4,12 @@
 import { RightNavBar } from "@/components/rightNavBar";
 import { Button } from "@/components/ui/button";
 import api from "@/lib/api"; // Para buscar dados
-import { Calendar, DollarSign, MapPin, Plus, Loader2, ArrowRight } from "lucide-react";
+import { Calendar, DollarSign, MapPin, Plus, Loader2, ArrowRight, Crown } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { format } from "date-fns";
+import { useAuth } from "@/context/AuthContext";
 
 type ItinerarioResumo = {
   id: number;
@@ -22,6 +23,7 @@ type ItinerarioResumo = {
 
 export default function DashboardPage() {
   const router = useRouter();
+  const { userRole } = useAuth(); // Usando a role do contexto
   const [loading, setLoading] = useState(true);
   const [resumo, setResumo] = useState({
     totalItinerarios: 0,
@@ -125,14 +127,28 @@ export default function DashboardPage() {
             <h1 className="text-3xl font-bold text-gray-800">
               Olá! Bem-vindo ao Waypoint
             </h1>
-            <p className="text-gray-500 mt-1">Seu painel de controle de viagens.</p>
+            <p className="text-gray-500 mt-1">
+                {userRole === "ROLE_PREMIUM" ? "Você está no plano Premium. Crie itinerários ilimitados!" : "Seu painel de controle de viagens."}
+            </p>
           </div>
-          <Button
-            onClick={() => router.push("/itinerary/new")}
-            className="bg-orange-500 hover:bg-orange-600 text-white font-semibold px-6 py-6 rounded-xl shadow-lg transition-all hover:-translate-y-1"
-          >
-            <Plus className="mr-2 h-5 w-5" /> Nova Viagem
-          </Button>
+          <div className="flex items-center gap-4">
+            {/* NOVO: Botão de Upgrade para ROLE_USER */}
+            {userRole === "ROLE_USER" && (
+                <Button
+                    onClick={() => router.push("/upgrade")}
+                    className="bg-yellow-500 hover:bg-yellow-600 text-white font-semibold px-4 py-6 rounded-xl shadow-lg transition-all hover:-translate-y-1"
+                >
+                    <Crown className="mr-2 h-5 w-5 fill-white" /> Seja Premium
+                </Button>
+            )}
+
+            <Button
+                onClick={() => router.push("/itinerary/new")}
+                className="bg-orange-500 hover:bg-orange-600 text-white font-semibold px-6 py-6 rounded-xl shadow-lg transition-all hover:-translate-y-1"
+            >
+                <Plus className="mr-2 h-5 w-5" /> Nova Viagem
+            </Button>
+          </div>
         </div>
 
         {loading ? (
@@ -183,6 +199,16 @@ export default function DashboardPage() {
                     Próximos Passos
                 </h2>
                 <ul className="space-y-3 text-gray-600">
+                  {/* Exibe a restrição se for USER e já tiver itinerário */}
+                    {userRole === "ROLE_USER" && resumo.totalItinerarios >= 1 && (
+                        <li className="flex items-center gap-3 font-semibold text-red-600 bg-red-50 p-3 rounded-lg border border-red-200">
+                            <Crown className="h-5 w-5 text-red-600 shrink-0 fill-red-300" />
+                            Você atingiu o limite de 1 itinerário no plano Básico.
+                            <Link href="/upgrade" className="text-blue-600 hover:underline ml-2 whitespace-nowrap">
+                                Clique para ser Premium
+                            </Link>
+                        </li>
+                    )}
                     <li className="flex items-center gap-3">
                         <Plus className="h-5 w-5 text-orange-500 shrink-0" />
                         Planeje seu próximo destino clicando em "Nova Viagem".

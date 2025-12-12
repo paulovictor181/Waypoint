@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -35,5 +36,11 @@ public class UsuarioController {
         // O Spring Security injeta o objeto Usuario (Principal) do usuário logado
         // O UsuarioMapper converte a entidade para o DTO de resposta
         return ResponseEntity.ok(UsuarioMapper.EntityToResponse(usuario));
+    }
+    
+    @PutMapping("/upgrade") // NOVO ENDPOINT
+    public ResponseEntity<RegisterResponse> upgradeToPremium(@AuthenticationPrincipal Usuario usuario) {
+        Usuario usuarioAtualizado = usuarioService.upgradeToPremium(usuario);
+        return ResponseEntity.ok(UsuarioMapper.EntityToResponse(usuarioAtualizado));
     }
 }

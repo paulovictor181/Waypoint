@@ -30,6 +30,7 @@ interface AuthContextType {
   logout: () => void;
   loading: boolean;
   userRole: string | null; 
+  refreshUserRole: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -98,11 +99,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     router.push("/login");
   };
 
-  return (
-    <AuthContext.Provider value={{ isAuthenticated, login, logout, loading, userRole }}>
-      {children}
-    </AuthContext.Provider>
-  );
+  const refreshUserRole = async () => {
+        // Função para ser chamada externamente para re-carregar o perfil
+        await fetchUserProfile(); 
+    }
+
+    return (
+        <AuthContext.Provider value={{ isAuthenticated, login, logout, loading, userRole, refreshUserRole }}>
+        {children}
+        </AuthContext.Provider>
+    );
 };
 
 export const useAuth = () => {

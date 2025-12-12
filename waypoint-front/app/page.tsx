@@ -1,7 +1,11 @@
+"use client";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { MapPin, Search } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 function Logo() {
   return (
@@ -13,6 +17,21 @@ function Logo() {
 }
 
 export default function OnboardingPage() {
+  const router = useRouter();
+  const [searchCity, setSearchCity] = useState("");
+
+  const handleSearch = () => {
+    if (searchCity.trim()) {
+      router.push(`/search?city=${encodeURIComponent(searchCity)}`);
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      handleSearch();
+    }
+  };
+
   return (
     <div className="min-h-screen w-full text-gray-100">
       <header className="container mx-auto max-w-6xl p-4 md:p-6">
@@ -42,9 +61,13 @@ export default function OnboardingPage() {
                        bg-gray-100 text-gray-900 
                        placeholder:text-gray-500 border-0 
                        focus-visible:ring-orange-500"
+            value={searchCity}
+            onChange={(e) => setSearchCity(e.target.value)}
+            onKeyDown={handleKeyDown}
           />
           <Button
             size="lg"
+            onClick={handleSearch}
             className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full 
                        bg-orange-500 text-white font-semibold hover:bg-orange-500/90"
           >

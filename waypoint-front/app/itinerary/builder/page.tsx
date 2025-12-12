@@ -126,15 +126,38 @@ export default function ItineraryPage() {
           if (data.dataInicio && data.dataFim) {
             const start = new Date(data.dataInicio + "T00:00:00");
             const end = new Date(data.dataFim + "T00:00:00");
-
             const diffDays = differenceInCalendarDays(end, start) + 1;
+
+            const diasBackendMap = new Map();
+            if (data.dias) {
+              data.dias.forEach((d: any) => diasBackendMap.set(d.numero, d));
+            }
 
             const diasGerados = Array.from({ length: diffDays }, (_, i) => {
               const currentDate = addDays(start, i);
+              const numeroDia = i + 1;
+              const diaExistente = diasBackendMap.get(numeroDia);
+
               return {
-                dia: i + 1,
+                dia: numeroDia,
                 displayDate: format(currentDate, "dd/MM", { locale: ptBR }),
-                locais: [],
+                locais:
+                  diaExistente && diaExistente.locaisDTO
+                    ? diaExistente.locaisDTO.map((l: any) => ({
+                        id: l.id,
+                        osmId: l.osmId,
+                        name: l.name,
+                        lat: l.latitude,
+                        lng: l.longitude,
+                        custos: l.custosDesteLocal
+                          ? l.custosDesteLocal.map((c: any) => ({
+                              id: c.id, // Importante para updates futuros
+                              description: c.description,
+                              amount: c.amount,
+                            }))
+                          : [],
+                      }))
+                    : [],
               };
             });
 

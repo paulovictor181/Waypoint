@@ -65,6 +65,17 @@ public class ItinerarioService {
         return toDetalhadoDTO(it);
     }
 
+    public List<ItinerarioResumoDTO> buscarPorCidade(String nomeCidade) {
+        List<Itinerario> lista = itinerarioRepository.findByCidadeNomeContainingIgnoreCase(nomeCidade);
+        return lista.stream().map(this::toDTO).collect(Collectors.toList());
+    }
+
+    public ItinerarioDetalhadoDTO buscarPorIdPublico(Long id) {
+        Itinerario it = itinerarioRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Itinerário não encontrado"));
+        return toDetalhadoDTO(it);
+    }
+
 
     @Transactional
     public ItinerarioResumoDTO criar(ItinerarioRequest request, Usuario usuario) {

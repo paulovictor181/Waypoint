@@ -43,6 +43,8 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(authz -> authz
                 .requestMatchers("/api/auth/**","/h2-console/**").permitAll()
+                    .requestMatchers("/api/itinerarios/search").permitAll()
+                    .requestMatchers("/api/itinerarios/public/**").permitAll()
                 .anyRequest().authenticated() 
             )
                 .addFilterBefore(filterChain, UsernamePasswordAuthenticationFilter.class)

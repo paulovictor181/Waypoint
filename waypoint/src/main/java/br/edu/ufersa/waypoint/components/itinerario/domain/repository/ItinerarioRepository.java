@@ -8,4 +8,5 @@ import br.edu.ufersa.waypoint.components.itinerario.domain.entities.Itinerario;
 
 public interface ItinerarioRepository extends JpaRepository<Itinerario, Long> {
     List<Itinerario> findByUsuarioId(Long usuarioId);
+    List<Itinerario> findByCidadeNomeContainingIgnoreCase(String nomeCidade);
 }

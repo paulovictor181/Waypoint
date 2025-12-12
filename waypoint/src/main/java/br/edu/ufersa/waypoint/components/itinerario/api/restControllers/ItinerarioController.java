@@ -28,6 +28,16 @@ public class ItinerarioController {
         return ResponseEntity.ok(itinerarioService.buscarPorIdDetalhado(id, usuario));
     }
 
+    @GetMapping("/search")
+    public ResponseEntity<List<ItinerarioResumoDTO>> buscarPorCidade(@RequestParam String city) {
+        return ResponseEntity.ok(itinerarioService.buscarPorCidade(city));
+    }
+
+    @GetMapping("/public/{id}")
+    public ResponseEntity<ItinerarioDetalhadoDTO> buscarPorIdPublico(@PathVariable Long id) {
+        return ResponseEntity.ok(itinerarioService.buscarPorIdPublico(id));
+    }
+
     @PostMapping
     public ResponseEntity<ItinerarioResumoDTO> criar(@RequestBody @Valid ItinerarioRequest request, @AuthenticationPrincipal Usuario usuario) {
         return ResponseEntity.ok(itinerarioService.criar(request, usuario));

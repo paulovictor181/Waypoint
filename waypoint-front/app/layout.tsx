@@ -1,10 +1,11 @@
-import { AuthProvider } from "@/context/AuthContext"; // Importe
+import AuthGuard from "@/components/AuthGuard";
+import { AuthProvider } from "@/context/AuthContext";
 import { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Waypoint", // Nome que aparecerá na aba
-  description: "Seu planejador de viagens e roteiros", // Descrição para SEO
+  title: "Waypoint",
+  description: "Seu planejador de viagens e roteiros",
 };
 
 export default function RootLayout({
@@ -15,7 +16,9 @@ export default function RootLayout({
   return (
     <html lang="pt-br">
       <body className="bg-white text-black">
-        <AuthProvider>{children}</AuthProvider>
+        <AuthProvider>
+          <AuthGuard>{children}</AuthGuard>
+        </AuthProvider>
       </body>
     </html>
   );

@@ -3,6 +3,7 @@ package br.edu.ufersa.waypoint.components.custo.domain.entities;
 import java.math.BigDecimal;
 
 
+import br.edu.ufersa.waypoint.components.common.Orcamentavel;
 import br.edu.ufersa.waypoint.components.dia.domain.entities.Dia;
 import br.edu.ufersa.waypoint.components.itinerario.domain.entities.Itinerario;
 import br.edu.ufersa.waypoint.components.local.domain.entities.Local;
@@ -24,7 +25,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class Custo {
+public class Custo implements Orcamentavel {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -51,4 +52,13 @@ public class Custo {
     @JoinColumn(name = "usuario_id")
     @JsonIgnore
     private Usuario usuario;
+
+
+    @Override
+    public BigDecimal calcularCustoTotal() {
+        if (this.amount == null) {
+            return BigDecimal.ZERO;
+        }
+        return this.amount;
+    }
 }

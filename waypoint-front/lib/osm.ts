@@ -1,16 +1,8 @@
 // waypoint-front/lib/osm.ts
 
-export interface POI {
-  id: number;
-  lat: number;
-  lng: number;
-  name: string;
-  type: string;
-  address?: string;
-  phone?: string;
-  website?: string;
-  cuisine?: string;
-}
+import { POI, PoiFactory } from "./poiFactory";
+
+export type { POI };
 
 export async function fetchPOIsInBounds(
   north: number,
@@ -45,41 +37,7 @@ export async function fetchPOIsInBounds(
     if (!data.elements) return [];
 
     return data.elements
-      .map((el: any) => {
-        // LÓGICA DE IDIOMA AQUI:
-        // 1. Tenta nome em Português do Brasil
-        // 2. Tenta nome em Português (Portugal/Geral)
-        // 3. Tenta nome padrão (língua local do lugar)
-        const name =
-          el.tags["name:pt-BR"] ||
-          el.tags["name:pt"] ||
-          el.tags.name ||
-          "Local sem nome";
-
-        // Formatação do endereço
-        const street = el.tags["addr:street"] || "";
-        const number = el.tags["addr:housenumber"] || "";
-        const city = el.tags["addr:city"] || "";
-        const suburb = el.tags["addr:suburb"] || "";
-
-        let address = "";
-        if (street) address += street;
-        if (number) address += `, ${number}`;
-        if (suburb) address += ` - ${suburb}`;
-        if (city) address += ` - ${city}`;
-
-        return {
-          id: el.id,
-          lat: el.lat,
-          lng: el.lon,
-          name: name,
-          type: el.tags.tourism || el.tags.amenity,
-          address: address || undefined,
-          phone: el.tags.phone || el.tags["contact:phone"],
-          website: el.tags.website || el.tags["contact:website"],
-          cuisine: el.tags.cuisine,
-        };
-      })
+      .map((el: any) => PoiFactory.createFromOsmElement(el))
       .filter((poi: POI) => poi.name !== "Local sem nome");
   } catch (error) {
     console.error("Erro de conexão com Overpass API:", error);

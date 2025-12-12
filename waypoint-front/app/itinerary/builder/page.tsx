@@ -535,6 +535,3 @@ export default function ItineraryPage() {
     </div>
   );
 }
-function fetchItinerary() {
-  throw new Error("Function not implemented.");
-}

@@ -1,5 +1,6 @@
 "use client";
 
+import { useAuth } from "@/context/AuthContext";
 import {
   faDoorOpen,
   faHome,
@@ -11,7 +12,6 @@ import { usePathname } from "next/navigation";
 import Logo from "./ui/logo";
 import NavBarBtn from "./ui/navBarBtn";
 
-// Conteúdo do menu lateral (necessita verificar o tipo de acesso do user)
 const NAV_ITEMS = [
   { label: "Início", icon: faHome, href: "/dashboard" },
   { label: "Usuários", icon: faUsers, href: "/users" },
@@ -25,6 +25,7 @@ const BOTTOM_ITEMS = [
 
 function RightNavBar() {
   const pathname = usePathname();
+  const { logout } = useAuth();
 
   return (
     <nav className="flex flex-col justify-between w-96 h-screen border-r-2 border-slate-400 p-4 bg-white">
@@ -47,11 +48,19 @@ function RightNavBar() {
       <div className="flex flex-col border-t pt-4">
         {BOTTOM_ITEMS.map((item) => (
           <NavBarBtn
-            key={item.href}
+            key={item.label}
             label={item.label}
             icon={item.icon}
             href={item.href}
             isActive={pathname === item.href}
+            onClick={
+              item.label === "Logout"
+                ? (e) => {
+                    e.preventDefault();
+                    logout();
+                  }
+                : undefined
+            }
           />
         ))}
       </div>

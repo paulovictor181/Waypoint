@@ -21,6 +21,7 @@ type Itinerario = {
   dataInicio: string; // O Backend envia como startDate, verifique o JSON
   dataFim: string;
   totalOrcamento: number;
+  custoTotal: number;
 };
 
 export default function ItineraryListPage() {
@@ -44,6 +45,7 @@ export default function ItineraryListPage() {
         dataInicio: item.startDate || item.dataInicio,
         dataFim: item.endDate || item.dataFim,
         totalOrcamento: item.totalOrcamento || item.totalBudget,
+        custoTotal: item.custoTotal || 0,
       }));
       setItineraries(data);
     } catch (error) {
@@ -112,6 +114,21 @@ export default function ItineraryListPage() {
                     <DollarSign className="h-4 w-4 mr-2 text-gray-400" />
                     R$ {it.totalOrcamento?.toFixed(2)}
                   </div>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-gray-500 flex items-center">
+                    <DollarSign className="h-4 w-4 mr-2 text-orange-500" />
+                    Gastos Reais:
+                  </span>
+                  <span
+                    className={`font-bold ${
+                      it.custoTotal > it.totalOrcamento
+                        ? "text-red-500"
+                        : "text-green-600"
+                    }`}
+                  >
+                    R$ {it.custoTotal?.toFixed(2)}
+                  </span>
                 </div>
 
                 <div className="border-t border-gray-100 pt-4 flex justify-between items-center">

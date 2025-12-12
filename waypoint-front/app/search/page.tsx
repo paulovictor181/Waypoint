@@ -26,6 +26,7 @@ type Itinerario = {
   dataInicio: string;
   dataFim: string;
   totalOrcamento: number;
+  custoTotal: number;
   cidadeNome: string;
 };
 
@@ -175,6 +176,13 @@ function SearchContent() {
                       <div className="flex items-center text-sm text-gray-500">
                         <DollarSign className="h-4 w-4 mr-2 text-gray-400" />
                         R$ {it.totalOrcamento?.toFixed(2)}
+                      </div>
+                      <div className="flex justify-between text-sm font-bold text-gray-800">
+                        <span className="flex items-center gap-1">
+                          <DollarSign className="h-3 w-3 text-orange-500" />
+                          Real:
+                        </span>
+                        <span>R$ {it.custoTotal?.toFixed(2)}</span>
                       </div>
                     </div>
                   </div>

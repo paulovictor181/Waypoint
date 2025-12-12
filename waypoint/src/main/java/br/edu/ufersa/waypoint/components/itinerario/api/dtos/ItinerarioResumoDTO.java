@@ -9,6 +9,7 @@ public record ItinerarioResumoDTO(
         LocalDate dataInicio,
         LocalDate dataFim,
         BigDecimal totalOrcamento,
+        BigDecimal custoTotal,
         String cidadeNome,
         Double cidadeLat,
         Double cidadeLon
